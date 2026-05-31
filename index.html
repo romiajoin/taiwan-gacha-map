@@ -253,6 +253,19 @@
       gap: 4px;
     }
 
+    /* 期間限定標籤 */
+    .popup-limited {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 3px 10px;
+      background: rgba(255, 228, 77, 0.15);
+      border: 1px solid var(--yellow);
+      border-radius: 20px;
+      color: var(--yellow);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
     /* Google Maps 連結 */
     .popup-gmaps-link {
       display: block;
@@ -432,7 +445,7 @@
         <!-- 搜尋框 -->
         <div class="search-box">
           <span>🔍</span>
-          <input type="text" id="searchInput" placeholder="搜尋 IP 角色" />
+          <input type="text" id="searchInput" placeholder="搜尋地點或地址..." />
         </div>
       </div>
 
@@ -512,7 +525,7 @@
         const csvText = await response.text();
 
         // 把 CSV 文字解析成陣列
-        // CSV 長這樣：店名,縣市,地區,地址,緯度,經度,熱門角色,備註
+        // CSV 長這樣：店名,縣市,地區,地址,緯度,經度,熱門角色,備註,期間限定
         const rows = csvText.trim().split('\n');  // 按換行切割成每一列
         const headers = rows[0].split(',');       // 第一列是標題列
 
@@ -530,6 +543,7 @@
               lng:       parseFloat(cols[5]),  // 經度（轉成數字）
               character: cols[6] || '',   // 熱門角色
               note:      cols[7] || '',   // 備註
+              limited:   cols[8] || '',   // 期間限定
             };
           })
           // 過濾掉：名稱是空的、或經緯度不是數字的列
@@ -604,6 +618,7 @@
             <div class="popup-addr">📍 ${loc.city}${loc.district} ${loc.addr}</div>
             ${loc.character ? `<div class="popup-addr">⭐ 熱門角色：${loc.character}</div>` : ''}
             ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
+            ${loc.limited ? `<div class="popup-limited">⏰ 期間限定：${loc.limited}</div>` : ''}
             <div class="popup-tags">
               ${tags.map(t => `<span class="tag">${t}</span>`).join('')}
             </div>
