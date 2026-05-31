@@ -532,7 +532,7 @@
         const csvText = await response.text();
 
         // 把 CSV 文字解析成陣列
-        // CSV 長這樣：店名,縣市,地區,地址,緯度,經度,熱門角色,備註,期間限定
+        // CSV 長這樣：店名,縣市,地區,地址,緯度,經度,IP,備註,期間限定
         const rows = csvText.trim().split('\n');  // 按換行切割成每一列
         const headers = rows[0].split(',');       // 第一列是標題列
 
@@ -548,7 +548,7 @@
               addr:      cols[3] || '',   // 地址
               lat:       parseFloat(cols[4]),  // 緯度（轉成數字）
               lng:       parseFloat(cols[5]),  // 經度（轉成數字）
-              character: cols[6] || '',   // 熱門角色
+              character: cols[6] || '',   // IP
               limited:   cols[7] || '',   // 期間限定
               note:      cols[8] || '',   // 備註
             };
@@ -611,7 +611,7 @@
       }
 
       data.forEach((loc, i) => {
-        // 組合標籤：用熱門角色和縣市當標籤
+        // 組合標籤：用IP和縣市當標籤
         const tags = [loc.city, loc.character].filter(t => t);
 
         // --- 建立地圖標記 ---
@@ -623,7 +623,7 @@
           .bindPopup(`
             <div class="popup-title">${loc.name}</div>
             <div class="popup-addr">📍 ${loc.city}${loc.district} ${loc.addr}</div>
-            ${loc.character ? `<div class="popup-addr">⭐ 熱門角色：${loc.character}</div>` : ''}
+            ${loc.character ? `<div class="popup-addr">⭐ IP：${loc.character}</div>` : ''}
             ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
             ${loc.limited ? `<div class="popup-limited">⏰ 期間限定：${loc.limited}</div>` : ''}
             <div class="popup-tags">
