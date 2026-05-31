@@ -17,9 +17,9 @@
     :root {
       --pink:    #ff4d8d;
       --yellow:  #ffe44d;
-      --dark:    #1a1a2e;
-      --mid:     #16213e;
-      --card:    #0f3460;
+      --dark:    #1C1C1E;
+      --mid:     #2C2C2E;
+      --card:    #3A3A3C;
       --white:   #f0eeff;
       --grey:    #8892b0;
     }
@@ -279,14 +279,74 @@
       font-weight: 700;
     }
 
+    /* 輪播 */
+    .carousel { position: relative; margin-bottom: 10px; }
+
+    .carousel-controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 6px;
+    }
+
+    .carousel-btn {
+      background: var(--pink);
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 18px;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.2s;
+    }
+
+    .carousel-btn:hover { opacity: 0.8; }
+
+    .carousel-counter {
+      font-size: 12px;
+      color: var(--grey);
+      font-family: 'Space Mono', monospace;
+    }
+
     /* 彈窗圖片 */
     .popup-img {
       width: 100%;
       height: 160px;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 8px;
       margin-bottom: 10px;
       display: block;
+    }
+
+    /* Lightbox 全螢幕圖片 */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+
+    .lightbox.show { display: flex; }
+
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .popup-img {
+      cursor: zoom-in;
     }
 
     /* Google Maps 連結 */
@@ -619,10 +679,12 @@
               addr:      cols[3] || '',   // 地址
               lat:       parseFloat(cols[4]),  // 緯度
               lng:       parseFloat(cols[5]),  // 經度
-              character: cols[6] || '',   // IP
-              limited:   cols[7] || '',   // 期間限定
-              note:      cols[8] || '',   // 備註
-              image:     cols[9] || '',   // 圖片（Google Drive 連結）
+              limited:   cols[6] || '',   // 期間限定
+              character: cols[7] || '',   // IP
+              image:     cols[8] || '',   // 圖片
+              edition:   cols[9] || '',   // 彈數
+              perDraw:   cols[10] || '',  // 一抽張數
+              note:      cols[11] || '',  // 備註
             };
           })
           // 過濾掉：名稱是空的、或經緯度不是數字的列
@@ -707,11 +769,29 @@
         const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
           .addTo(map)
           .bindPopup(`
-            ${loc.image ? `<img src="${driveUrlToImage(loc.image)}" class="popup-img" />` : ''}
+            ${loc.image ? (() => {
+              const imgs = loc.image.split(',').map(s => s.trim()).filter(s => s);
+              if (imgs.length === 1) {
+                return `<a href="${imgs[0]}" target="_blank"><img src="${imgs[0]}" class="popup-img" /></a>`;
+              }
+              const id = 'carousel-' + i;
+              return `
+                <div class="carousel" id="${id}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
+                  <img src="${imgs[0]}" class="popup-img carousel-img" />
+                  <div class="carousel-controls">
+                    <button class="carousel-btn" data-action="prev" data-id="${id}">‹</button>
+                    <span class="carousel-counter">1 / ${imgs.length}</span>
+                    <button class="carousel-btn" data-action="next" data-id="${id}">›</button>
+                  </div>
+                </div>
+              `;
+            })() : ''}
             <div class="popup-title">${loc.name}</div>
             ${loc.venue ? `<div class="popup-addr">🏢 ${loc.venue}</div>` : ""}
             <div class="popup-addr">📍 ${loc.addr}</div>
             ${loc.character ? `<div class="popup-addr">⭐ IP：${loc.character}</div>` : ''}
+            ${loc.edition ? `<div class="popup-addr">🃏 彈數：${loc.edition}</div>` : ''}
+            ${loc.perDraw ? `<div class="popup-addr">🎴 一抽張數：${loc.perDraw}</div>` : ''}
             ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
             ${loc.limited ? `<div class="popup-limited">⏰ 期間限定：${loc.limited}</div>` : ''}
 
@@ -752,6 +832,18 @@
     // 頁面載入時，從 Google Sheet 讀取資料
     loadFromSheet();
 
+    // 事件委派：處理輪播按鈕和圖片點擊
+    document.addEventListener('click', function(e) {
+      const btn = e.target.closest('.carousel-btn');
+      if (btn) {
+        e.stopPropagation();
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        if (action === 'prev') carouselPrev(id);
+        if (action === 'next') carouselNext(id);
+      }
+    });
+
     // =============================================
     // 🔍 搜尋功能
     // =============================================
@@ -763,7 +855,8 @@
         loc.addr.toLowerCase().includes(keyword) ||
         loc.city.toLowerCase().includes(keyword) ||
         loc.venue.toLowerCase().includes(keyword) ||
-        loc.character.toLowerCase().includes(keyword)
+        loc.character.toLowerCase().includes(keyword) ||
+        loc.edition.toLowerCase().includes(keyword)
       );
       renderLocations(filtered);
     });
@@ -816,5 +909,10 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
   </script>
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" />
+  </div>
+
 </body>
 </html>
