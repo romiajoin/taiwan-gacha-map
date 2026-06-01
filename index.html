@@ -238,10 +238,10 @@
 
     /* ===== Leaflet 彈出視窗客製化 ===== */
     .leaflet-popup-content-wrapper {
-      background: var(--mid);
+      background: #1c1c1e;
       color: var(--white);
-      border: 1px solid var(--pink);
-      border-radius: 12px;
+      border: 1px solid #ffcf48;
+      border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
 
@@ -266,61 +266,83 @@
       gap: 4px;
     }
 
-    /* 期間限定標籤 */
-    .popup-limited {
-      display: inline-block;
-      margin-top: 6px;
-      padding: 3px 10px;
-      background: rgba(255, 228, 77, 0.15);
-      border: 1px solid var(--yellow);
-      border-radius: 20px;
-      color: var(--yellow);
-      font-size: 12px;
-      font-weight: 700;
+/* 輪播 */
+    .carousel { margin-bottom: 4px; }
+
+    /* 圖片置中 */
+    .carousel-img-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
-    /* 輪播 */
-    .carousel { position: relative; margin-bottom: 10px; }
-
+    /* 下方控制列：‹ 1/3 › */
     .carousel-controls {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 12px;
-      margin-top: 6px;
+      gap: 10px;
+      margin-top: 8px;
     }
 
     .carousel-btn {
-      background: var(--pink);
-      color: white;
+      background: #ffcf48;
+      color: #1c1c1e;
       border: none;
       border-radius: 50%;
-      width: 28px;
-      height: 28px;
-      font-size: 18px;
+      width: 20px;
+      height: 20px;
+      min-width: 20px;
+      font-size: 14px;
+      font-weight: bold;
       line-height: 1;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: opacity 0.2s;
+      padding: 0;
     }
 
     .carousel-btn:hover { opacity: 0.8; }
 
     .carousel-counter {
       font-size: 12px;
-      color: var(--grey);
-      font-family: 'Space Mono', monospace;
+      color: var(--white);
+      min-width: 32px;
+      text-align: center;
+    }
+
+    /* 期間限定 */
+    .popup-limited {
+      display: block;
+      margin-top: 8px;
+      padding: 6px 12px;
+      background: #1c1c1e;
+      border: 1px solid #ffcf48;
+      border-radius: 15px;
+      color: #ffcf48;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    /* 彈窗圖片容器 */
+    .popup-img-wrap {
+      background: rgba(120,125,128,0.2);
+      border-radius: 8px;
+      padding: 10px;
+      margin: 10px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     /* 彈窗圖片 */
     .popup-img {
-      width: 100%;
-      height: 160px;
-      object-fit: contain;
+      width: 120px;
+      height: 120px;
+      object-fit: cover;
       border-radius: 8px;
-      margin-bottom: 10px;
       display: block;
     }
 
@@ -345,9 +367,7 @@
       border-radius: 8px;
     }
 
-    .popup-img {
-      cursor: zoom-in;
-    }
+
 
     /* Google Maps 連結 */
     .popup-gmaps-link {
@@ -690,6 +710,18 @@
           // 過濾掉：名稱是空的、或經緯度不是數字的列
           .filter(loc => loc.name && !isNaN(loc.lat) && !isNaN(loc.lng));
 
+        // 排序：依期間限定結束日期從近到遠
+        // 格式假設為 "YYYY/MM/DD～YYYY/MM/DD"，取最後的結束日期
+        locations.sort((a, b) => {
+          const getEndDate = (limited) => {
+            if (!limited) return new Date('9999/12/31'); // 沒有期限的排最後
+            const parts = limited.split('～');
+            const dateStr = parts[parts.length - 1].trim().replace(/\//g, '-');
+            return new Date(dateStr);
+          };
+          return getEndDate(a.limited) - getEndDate(b.limited);
+        });
+
         // 儲存到全域變數（搜尋時使用）
         allLocations = locations;
 
@@ -769,23 +801,6 @@
         const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
           .addTo(map)
           .bindPopup(`
-            ${loc.image ? (() => {
-              const imgs = loc.image.split(',').map(s => s.trim()).filter(s => s);
-              if (imgs.length === 1) {
-                return `<a href="${imgs[0]}" target="_blank"><img src="${imgs[0]}" class="popup-img" /></a>`;
-              }
-              const id = 'carousel-' + i;
-              return `
-                <div class="carousel" id="${id}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
-                  <img src="${imgs[0]}" class="popup-img carousel-img" />
-                  <div class="carousel-controls">
-                    <button class="carousel-btn" data-action="prev" data-id="${id}">‹</button>
-                    <span class="carousel-counter">1 / ${imgs.length}</span>
-                    <button class="carousel-btn" data-action="next" data-id="${id}">›</button>
-                  </div>
-                </div>
-              `;
-            })() : ''}
             <div class="popup-title">${loc.name}</div>
             ${loc.venue ? `<div class="popup-addr">🏢 ${loc.venue}</div>` : ""}
             <div class="popup-addr">📍 ${loc.addr}</div>
@@ -794,7 +809,27 @@
             ${loc.perDraw ? `<div class="popup-addr">🎴 一抽張數：${loc.perDraw}</div>` : ''}
             ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
             ${loc.limited ? `<div class="popup-limited">⏰ 期間限定：${loc.limited}</div>` : ''}
-
+            ${loc.image ? (() => {
+              const imgs = loc.image.split(',').map(s => s.trim()).filter(s => s);
+              if (imgs.length === 1) {
+                return `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" /></div>`;
+              }
+              const id = 'carousel-' + i;
+              return `
+                <div class="popup-img-wrap">
+                  <div class="carousel" id="${id}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
+                    <div class="carousel-img-wrap">
+                      <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" />
+                    </div>
+                    <div class="carousel-controls">
+                      <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${id}">&#8249;</button>
+                      <span class="carousel-counter">1 / ${imgs.length}</span>
+                      <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${id}">&#8250;</button>
+                    </div>
+                  </div>
+                </div>
+              `;
+            })() : ''}
             <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link">
               在 Google Maps 查看 →
             </a>
@@ -829,20 +864,78 @@
       document.getElementById('countBadge').textContent = data.length;
     }
 
+    // =============================================
+    // 🔍 Lightbox 函式
+    // =============================================
+    function openLightbox(src) {
+      document.getElementById('lightboxImg').src = src;
+      document.getElementById('lightbox').classList.add('show');
+    }
+
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('show');
+    }
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closeLightbox();
+    });
+
+    // =============================================
+    // 🎠 輪播控制函式
+    // =============================================
+    function carouselPrev(id) {
+      const el = document.getElementById(id);
+      const imgs = JSON.parse(el.getAttribute('data-imgs'));
+      let idx = parseInt(el.getAttribute('data-index'));
+      idx = (idx - 1 + imgs.length) % imgs.length;
+      el.setAttribute('data-index', idx);
+      const img = el.querySelector('.carousel-img');
+      img.src = imgs[idx];
+      img.setAttribute('data-lightbox', imgs[idx]);
+      el.querySelector('.carousel-counter').textContent = (idx + 1) + ' / ' + imgs.length;
+    }
+
+    function carouselNext(id) {
+      const el = document.getElementById(id);
+      const imgs = JSON.parse(el.getAttribute('data-imgs'));
+      let idx = parseInt(el.getAttribute('data-index'));
+      idx = (idx + 1) % imgs.length;
+      el.setAttribute('data-index', idx);
+      const img = el.querySelector('.carousel-img');
+      img.src = imgs[idx];
+      img.setAttribute('data-lightbox', imgs[idx]);
+      el.querySelector('.carousel-counter').textContent = (idx + 1) + ' / ' + imgs.length;
+    }
+
     // 頁面載入時，從 Google Sheet 讀取資料
     loadFromSheet();
 
-    // 事件委派：處理輪播按鈕和圖片點擊
+    // 事件委派（capture 模式，確保 Leaflet 不攔截）
     document.addEventListener('click', function(e) {
-      const btn = e.target.closest('.carousel-btn');
+      // 輪播按鈕
+      const btn = e.target.closest('[data-carousel-action]');
       if (btn) {
         e.stopPropagation();
-        const action = btn.getAttribute('data-action');
-        const id = btn.getAttribute('data-id');
+        e.preventDefault();
+        const action = btn.getAttribute('data-carousel-action');
+        const id = btn.getAttribute('data-carousel-id');
         if (action === 'prev') carouselPrev(id);
         if (action === 'next') carouselNext(id);
+        return;
       }
-    });
+      // 圖片點擊放大
+      const img = e.target.closest('[data-lightbox]');
+      if (img) {
+        e.stopPropagation();
+        e.preventDefault();
+        // 如果是輪播圖片，取目前顯示的圖片
+        const carouselImg = img.classList.contains('carousel-img')
+          ? img
+          : img.querySelector('.carousel-img') || img;
+        openLightbox(carouselImg.src);
+        return;
+      }
+    }, true);
 
     // =============================================
     // 🔍 搜尋功能
