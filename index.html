@@ -289,6 +289,31 @@
       display: block;
     }
 
+    /* Lightbox 全螢幕圖片 */
+    .lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.9);
+      z-index: 99999;
+      align-items: center;
+      justify-content: center;
+      cursor: zoom-out;
+    }
+
+    .lightbox.show { display: flex; }
+
+    .lightbox img {
+      max-width: 90vw;
+      max-height: 90vh;
+      object-fit: contain;
+      border-radius: 8px;
+    }
+
+    .popup-img {
+      cursor: zoom-in;
+    }
+
     /* Google Maps 連結 */
     .popup-gmaps-link {
       display: block;
@@ -707,7 +732,7 @@
         const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
           .addTo(map)
           .bindPopup(`
-            ${loc.image ? `<img src="${loc.image.trim()}" class="popup-img" />` : ''}
+            ${loc.image ? `<img src="${loc.image.trim()}" class="popup-img" onclick="openLightbox('${loc.image.trim()}')" />` : ''}
             <div class="popup-title">${loc.name}</div>
             ${loc.venue ? `<div class="popup-addr">🏢 ${loc.venue}</div>` : ""}
             <div class="popup-addr">📍 ${loc.addr}</div>
@@ -816,5 +841,10 @@
       setTimeout(() => toast.classList.remove('show'), 3000);
     }
   </script>
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <img id="lightboxImg" src="" />
+  </div>
+
 </body>
 </html>
