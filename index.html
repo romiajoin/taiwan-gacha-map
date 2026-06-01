@@ -777,13 +777,11 @@
     // 頁面載入時，從 Google Sheet 讀取資料
     loadFromSheet();
 
-    // 監聽彈窗開啟事件，再綁定圖片點擊
-    map.on('popupopen', function() {
-      const img = document.querySelector('.leaflet-popup .popup-img');
-      if (img) {
-        img.addEventListener('click', function() {
-          openLightbox(this.getAttribute('data-src'));
-        });
+    // 事件委派：在 document 層級監聽，這樣 Leaflet 彈窗裡的圖片也能點擊
+    document.addEventListener('click', function(e) {
+      if (e.target.classList.contains('popup-img')) {
+        e.stopPropagation();
+        openLightbox(e.target.getAttribute('data-src'));
       }
     });
 
