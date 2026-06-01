@@ -732,7 +732,7 @@
         const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
           .addTo(map)
           .bindPopup(`
-            ${loc.image ? `<img src="${loc.image.trim()}" class="popup-img" onclick="openLightbox('${loc.image.trim()}')" />` : ''}
+            ${loc.image ? `<img src="${loc.image.trim()}" class="popup-img" data-src="${loc.image.trim()}" />` : ''}
             <div class="popup-title">${loc.name}</div>
             ${loc.venue ? `<div class="popup-addr">🏢 ${loc.venue}</div>` : ""}
             <div class="popup-addr">📍 ${loc.addr}</div>
@@ -776,6 +776,16 @@
 
     // 頁面載入時，從 Google Sheet 讀取資料
     loadFromSheet();
+
+    // 監聽彈窗開啟事件，再綁定圖片點擊
+    map.on('popupopen', function() {
+      const img = document.querySelector('.leaflet-popup .popup-img');
+      if (img) {
+        img.addEventListener('click', function() {
+          openLightbox(this.getAttribute('data-src'));
+        });
+      }
+    });
 
     // =============================================
     // 🔍 搜尋功能
