@@ -6,16 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-29PN14JRK8"></script>
-  <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-
-  gtag('config', 'G-29PN14JRK8');
-  </script>
-
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-29PN14JRK8"></script>
   <script>
   window.dataLayer = window.dataLayer || [];
@@ -235,6 +225,7 @@
 
     /* Map */
     #map { flex: 1; }
+    .mobile-map-search { display: none; }
 
     /* ===== Leaflet popup (原始版) ===== */
     .leaflet-popup-content-wrapper {
@@ -317,7 +308,44 @@
       .grid { grid-template-columns: 1fr; gap: 12px; }
       .toolbar { padding: 8px 12px; }
       .view-btn .label { display: none; }
-      .sidebar { width: 200px; }
+
+      /* 地圖模式：上地圖下列表 */
+      #mapView {
+        flex-direction: column;
+        position: relative;
+      }
+      #map {
+        flex: none;
+        height: 55vh;
+        order: -1;
+      }
+      .sidebar {
+        width: 100%;
+        border-right: none;
+        border-top: 2px solid var(--pink);
+        height: calc(45vh);
+        flex-direction: column;
+        overflow: hidden;
+      }
+      .sidebar-header { padding: 10px 16px 6px; }
+      .mobile-map-search {
+        display: flex;
+        align-items: center;
+        background: rgba(142,142,147,0.2);
+        border-radius: 19px;
+        padding: 8px 16px; gap: 8px;
+        margin: 0 12px 8px;
+      }
+      .mobile-map-search input {
+        background: none; border: none; outline: none;
+        color: var(--white); font-family: 'Noto Sans TC', sans-serif;
+        font-size: 13px; width: 100%;
+      }
+      .mobile-map-search input::placeholder { color: var(--grey); }
+      .location-list { padding: 0 8px 8px; }
+      .mobile-count-badge { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--grey); white-space: nowrap; }
+      .mobile-count-badge strong { color: var(--pink); font-size: 13px; }
+      body.map-view .toolbar { display: none; }
     }
   </style>
 </head>
@@ -359,6 +387,11 @@
         <div class="sidebar-header">
           <h2>地點列表</h2>
         </div>
+        <div class="mobile-map-search">
+          <span>🔍</span>
+          <input type="text" id="mapSearchInput" placeholder="搜尋 IP 或縣市..." />
+          <div class="mobile-count-badge"><strong id="mobileCountBadge">0</strong> 個地點</div>
+        </div>
         <div class="location-list" id="locationList"></div>
       </aside>
       <div id="map"></div>
@@ -398,6 +431,7 @@
       document.getElementById('btnMap').classList.toggle('active', view === 'map');
       document.getElementById('gridView').classList.toggle('active', view === 'grid');
       document.getElementById('mapView').classList.toggle('active', view === 'map');
+      document.body.classList.toggle('map-view', view === 'map');
 
       if (view === 'map') {
         initMap();
@@ -594,6 +628,7 @@
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       document.getElementById('countBadge').textContent = data.length;
+      document.getElementById('mobileCountBadge').textContent = data.length;
 
       if (data.length === 0) {
         grid.innerHTML = '<div class="empty-state">找不到符合的地點 😢</div>';
@@ -668,8 +703,13 @@
     // =============================================
     // 🔍 搜尋
     // =============================================
-    document.getElementById('searchInput').addEventListener('input', function () {
-      const kw = this.value.trim().toLowerCase();
+    function syncCount(n) {
+      document.getElementById('countBadge').textContent = n;
+      document.getElementById('mobileCountBadge').textContent = n;
+    }
+
+    function handleSearch(kw) {
+      kw = kw.trim().toLowerCase();
       currentFiltered = allLocations.filter(loc =>
         loc.name.toLowerCase().includes(kw) ||
         loc.addr.toLowerCase().includes(kw) ||
@@ -679,8 +719,15 @@
         loc.edition.toLowerCase().includes(kw)
       );
       renderGrid(currentFiltered);
-      document.getElementById('countBadge').textContent = currentFiltered.length;
+      syncCount(currentFiltered.length);
       if (map) renderMapLocations(currentFiltered);
+    }
+
+    document.getElementById('searchInput').addEventListener('input', function () {
+      handleSearch(this.value);
+    });
+    document.getElementById('mapSearchInput').addEventListener('input', function () {
+      handleSearch(this.value);
     });
 
     // =============================================
