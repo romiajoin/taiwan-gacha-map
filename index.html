@@ -6,12 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
 
+  <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-29PN14JRK8"></script>
   <script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-1G91M8FLWQ');
+   window.dataLayer = window.dataLayer || [];
+   function gtag(){dataLayer.push(arguments);}
+   gtag('js', new Date());
+
+   gtag('config', 'G-1G91M8FLWQ');
   </script>
 
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -384,9 +386,6 @@
     <!-- Map View -->
     <div id="mapView">
       <aside class="sidebar">
-        <div class="sidebar-header">
-          <h2>地點列表</h2>
-        </div>
         <div class="mobile-map-search">
           <span>🔍</span>
           <input type="text" id="mapSearchInput" placeholder="搜尋 IP 或縣市..." />
