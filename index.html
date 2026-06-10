@@ -23,24 +23,26 @@
 
   <style>
     :root {
-      --primary-blue:     #0066FF;
-      --primary-yellow:   #FFCF48;
+      --fill-blue:     #0066FF;
+      --fill-orange:   #EA580C; 
+      --fill-green:    #16A34A;
       --fill-black:    #000000;
       --fill-white:    #FFFFFF;
       --fill-gray:     #3C3C43;
-      --fill-gray-8:   rgba(60,60,67,0.08);
-      --fill-gray-16:  rgba(60,60,67,0.16);
-      --fill-gray-64:  rgba(60,60,67,0.64);
+      --fill-gray5:    #E5E5EA;
+      --fill-gray6:    #F2F2F7;
+      --fill-gray-8:   rgba(28,28,28,0.08);
+      --fill-gray-16:  rgba(28,28,28,0.16);
+      --fill-gray-64:  rgba(28,28,28,0.64);
       --fill-blue-8: rgba(0,102,255,0.08);
       --fill-blue-16: rgba(0,102,255,0.16);
-      --background-offwhite: #F2F2F7;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Chiron GoRound TC', sans-serif;
-      background: var(--background-offwhite);
+      background: var(--fill-gray6);
       color: var(--fill-black);
       height: 100dvh;
       display: flex;
@@ -50,7 +52,7 @@
 
     /* ===== Header ===== */
     header {
-      background: var(--background-offwhite);
+      background: var(--fill-gray6);
       padding: 24px 20px;
       display: flex;
       align-items: center;
@@ -58,73 +60,84 @@
       flex-shrink: 0;
       z-index: 200;
     }
-    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo { display: flex; align-items: center; gap: 16px; }
     .logo-icon {
-      width: 32px; height: 32px; border-radius: 50%; overflow: hidden;
+      width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
       flex-shrink: 0; object-fit: cover;
     }
-    .logo h1 { font-size: 20px; font-weight: 700; letter-spacing: 1px; color: var(--fill-black); }
-    .logo h1 span { color: var(--primary-blue); }
-    .header-right { display: flex; align-items: center; gap: 12px; }
-    .header-info { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--fill-black); }
+    .logo h1 { font-size: 24px; font-weight: 700; letter-spacing: 1px; color: var(--fill-black); }
+    .logo h1 span { color: var(--fill-blue); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-info { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--fill-black); }
 
     /* View Toggle */
     .view-toggle {
       display: flex;
-      background: var(--fill-gray-16);
+      background: none; border: 1px solid var(--fill-blue);
       border-radius: 8px;
       overflow: hidden;
     }
     .view-btn {
-      padding: 6px 16px;
-      font-size: 13px;
+      padding: 8px 16px;
+      font-size: 14px;
       font-family: 'Chiron GoRound TC', sans-serif;
-      font-weight: 700;
+      font-weight: 400;
       background: none; border: none;
-      color: var(--black); cursor: pointer;
-      transition: background 0.18s, color 0.18s;
-      display: flex; align-items: center; gap: 5px;
+      color: var(--fill-black); cursor: pointer;
+      transition: background 0.18s, color 0.18s, font-weight 0.18s;
+      display: flex; align-items: center; gap: 4px;
     }
-    .view-btn:hover { color: var(--primary-blue); }
-    .view-btn.active { background: var(--primary-blue); color: var(--fill-white); }
+    .map-icon-fill { display: none; }
+    .view-btn.active .map-icon-outline { display: none; }
+    .view-btn.active .map-icon-fill { display: block; }
+    .view-btn:hover { color: var(--fill-blue); }
+    .view-btn.active { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
 
     /* ===== Toolbar ===== */
     .toolbar {
       padding: 24px 20px;
       display: flex; align-items: center; gap: 24px;
       flex-shrink: 0;
+      background: var(--fill-gray5);
     }
     .search-box {
       display: flex; align-items: center;
-      background: var(--fill-gray-8);
+      background: var(--fill-gray6);
       border-radius: 9999px; gap: 12px;
-      padding: 10px 16px;
+      padding: 16px 16px;
       width: 400px;
       flex-shrink: 0;
     }
     .search-box input {
       background: none; border: none; outline: none;
-      color: var(--black); font-family: 'Chiron GoRound TC', sans-serif;
+      color: var(--fill-black); font-family: 'Chiron GoRound TC', sans-serif;
       font-size: 14px; width: 100%;
     }
     .search-box input::placeholder { color: var(--fill-gray-64); }
+    .search-box input:-webkit-autofill,
+    .search-box input:-webkit-autofill:focus {
+     -webkit-box-shadow: 0 0 0 1000px var(--fill-gray6) inset;
+     box-shadow: 0 0 0 1000px var(--fill-gray6) inset;
+    }
     .search-clear-btn { display: none; background: none; border: none; padding: 0; cursor: pointer; color: var(--fill-black); flex-shrink: 0; line-height: 0; }
-    .search-clear-btn:hover { color: var(--primary-blue); }
-    .count-badge { font-family: 'Chiron GoRound TC', sans-serif; font-size: 16px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
-    .count-badge strong { color: var(--primary-blue); font-size: 20px; font-weight: 700; }
+    .search-clear-btn:hover { color: var(--fill-blue); }
+    .count-badge { font-family: 'Chiron GoRound TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
+    .count-badge strong { color: var(--fill-blue); font-size: 20px; font-weight: 700; }
 
     /* ===== Filter Chips ===== */
     .filter-bar {
-      background: var(--gray-8);
-      padding: 8px 24px 10px;
-      display: flex; align-items: center; gap: 8px;
+      background: var(--fill-gray5);
+      padding: 0px 20px 24px;
+      display: flex; align-items: center; gap: 16px;
       flex-shrink: 0;
     }
     .filter-chip {
-      padding: 5px 14px;
-      font-size: 13px;
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 8px 16px;
+      font-size: 14px;
+      line-height: 1.2;
       font-family: 'Chiron GoRound TC', sans-serif;
-      font-weight: 500;
+      font-weight: 400;
       background: var(--gray-8);
       border: 1px solid var(--gray-16);
       border-radius: 20px;
@@ -133,22 +146,27 @@
       transition: background 0.18s, color 0.18s, border-color 0.18s;
       white-space: nowrap;
     }
-    .filter-chip:hover { color: var(--primary-blue); border-color: var(--primary-blue); }
-    .filter-chip.active { background: var(--primary-blue); color: var(--fill-white); border-color: var(--primary-blue); }
+    .filter-chip:hover { color: var(--fill-blue); border-color: var(--fill-blue); font-weight: 500; }
+    .filter-chip.active { background: var(--fill-blue); color: var(--fill-white); border-color: var(--fill-blue); }
+    .chip-icon-fill { display: none; }
+    .filter-chip.active .chip-icon-outline { display: none; }
+    .filter-chip.active .chip-icon-fill { display: inline; }
 
     /* Badge */
     .type-badge {
-      display: inline-block;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
       align-self: flex-start;
       font-size: 12px; font-weight: 500;
-      padding: 4px 8px; border-radius: 4px;
+      padding: 4px 8px; border-radius: 9999px;
       color: var(--fill-black);
     }
-    .type-badge.gacha { background: var(--fill-blue-16); border: 1px solid var(--primary-blue); color: var(--primary-blue); }
-    .type-badge.photocard { background: var(--fill-blue-16); border: 1px solid var(--primary-blue); color: var(--primary-blue); }
+    .type-badge.gacha { background: var(--fill-white); border: 1px solid var(--fill-orange); color: var(--fill-orange); }
+    .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
 
     @media (max-width: 640px) {
-      .filter-bar { padding: 8px 12px 10px; gap: 6px; overflow-x: auto; }
+      .filter-bar { padding: 12px 20px 12px; gap: 8px; overflow-x: auto; }
       .filter-bar::-webkit-scrollbar { display: none; }
     }
 
@@ -180,24 +198,24 @@
       display: flex; flex-direction: column;
     }
     .loc-card-grid:hover {
-      border-color: var(--primary-blue);
+      border-color: var(--fill-blue);
       transform: translateY(-2px);
       box-shadow: 0 8px 24px var(--fill-blue-16);
     }
     
     .card-top { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .card-name { font-weight: 700; font-size: 16px; line-height: 1.35; color: var(--fill-black); }
-    .card-limited { font-size: 14px; color: var(--primary-blue); font-weight: 500; }
-    .card-tags { display: flex; flex-wrap: wrap; gap: 12px; }
+    .card-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
     .tag {
-      font-size: 14px; padding: 2px 8px; border-radius: 20px;
+      font-size: 14px; padding: 4px 8px; border-radius: 20px;
       background: var(--fill-gray-8); color: var(--fill-black);
       border: 1px solid var(--fill-gray-64);
     }
     .card-actions { padding: 0px 16px 16px; display: flex; align-items: center; gap: 8px; margin-top: auto; }
     .btn-gmaps {
       display: inline-flex; align-items: center; gap: 5px;
-      color: var(--blue); font-size: 14px; font-weight: 400;
+      color: var(--fill-blue); font-size: 14px; font-weight: 400;
       font-family: 'Chiron GoRound TC', sans-serif;
       text-decoration: underline; text-underline-offset: 3px;
       background: none; border: none; padding: 0;
@@ -205,10 +223,10 @@
     }
     .btn-gmaps:hover { opacity: 0.75; }
     .btn-expand {
-      display: inline-flex; align-items: center; gap: 4px;
+      display: inline-flex; align-items: center; gap: 2px;
       padding: 4px 8px;
-      background: var(--primary-blue); border: none;
-      border-radius: 4px; color: var(--fill-white); font-size: 12px;
+      background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
+      border-radius: 4px; color: var(--fill-blue); font-size: 12px;
       font-family: 'Chiron GoRound TC', sans-serif; cursor: pointer;
       transition: opacity 0.2s;
       margin-left: auto;
@@ -258,17 +276,17 @@
 
     /* Sidebar card */
     .loc-card {
-      background: var(--gray-8);
+      background: var(--fill-blue-8);
       border-radius: 16px; padding: 16px; margin-bottom: 20px;
-      cursor: pointer; border: 1px solid var(--gray-16);
-      transition: border-color 0.2s, transform 0.15s;
+      cursor: pointer; border: 1px solid transparent;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
     }
-    .loc-card:hover { border-color: var(--primary-blue); transform: translateX(3px); box-shadow: 0 8px 24px rgba(0,102,255,0.24); }
-    .loc-card.active { border-color: var(--primary-blue); }
-    .loc-name { font-weight: 500; font-size: 16px; color: var(--fill-black); margin-top: 12px; margin-bottom: 12px; }
-    .loc-limited { font-size: 14px; color: var(--primary-blue); font-weight: 500; margin-bottom: 12px; }
+    .loc-card:hover { border-color: var(--fill-blue); transform: translateX(3px); box-shadow: 0 8px 24px rgba(0,102,255,0.24); }
+    .loc-card.active { border-color: var(--fill-blue); }
+    .loc-name { font-weight: 700; font-size: 16px; color: var(--fill-black); margin-top: 12px; margin-bottom: 14px; }
+    .loc-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; margin-bottom: 12px; }
     .loc-tags { display: flex; flex-wrap: wrap; gap: 8px; }
-    .loc-tags .tag { font-size: 14px; padding: 2px 8px; }
+    .loc-tags .tag { font-size: 14px; padding: 4px 8px; }
 
     /* Map */
     #map { flex: 1; }
@@ -276,9 +294,10 @@
 
     /* ===== Leaflet popup ===== */
     .leaflet-popup-content-wrapper {
-      background: var(--background-off-white); color: var(--fill-black);
-      border: 1px solid var(--blue); border-radius: 16px;
+      background: var(--fill-gray6); color: var(--fill-black);
+      border: 1px solid var(--fill-blue); border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      font-family: 'Chiron GoRound TC', sans-serif;
     }
     .leaflet-popup-content { margin: 16px !important; position: relative; max-height: 70vh; overflow-y: auto; }
     .popup-close-btn {
@@ -288,15 +307,15 @@
       font-size: 18px; cursor: pointer; line-height: 1;
       display: flex; align-items: center; justify-content: center;
     }
-    .popup-close-btn:hover { color: var(--blue); }
-    .leaflet-popup-tip { background: var(--off-white); }
+    .popup-close-btn:hover { color: var(--fill-blue); }
+    .leaflet-popup-tip { background: var(--fill-gray6); }
     .popup-title { font-weight: 700; font-size: 16px; margin-bottom: 0; color: var(--fill-black); flex: 1; }
     .popup-addr { font-size: 14px; color: var(--fill-black); margin-bottom: 0; }
     .popup-limited {
       display: inline-block; padding: 4px 8px;
-      background: var(--primary-blue); border: 1px;
-      border-radius: 15px; color: var(--fill-white); font-size: 14px; font-weight: 400;
-      margin-top: 8px;
+      background: var(--fill-gray-8); border: 1px solid var(--fill-gray-64);
+      border-radius: 9999px; color: var(--fill-black); font-size: 14px; font-weight: 400;
+      margin-top: 4px;
     }
     .popup-img-wrap {
       background: var(--fill-gray-8); border-radius: 8px;
@@ -305,18 +324,18 @@
     }
     .popup-img { width: 100%; height: auto; border-radius: 8px; display: block; cursor: zoom-in; }
     .popup-gmaps-link {
-      display: block; margin-top: 12px; color: var(--primary-blue) !important;
+      display: block; margin-top: 12px; color: var(--fill-blue) !important;
       font-size: 14px; font-weight: 400; text-decoration: underline; transition: opacity 0.2s;
     }
     .popup-gmaps-link:hover { opacity: 0.75; }
-    .leaflet-popup-content .popup-gmaps-link { color: var(--primary-blue) !important; text-decoration: underline !important; }
+    .leaflet-popup-content .popup-gmaps-link { color: var(--fill-blue) !important; text-decoration: underline !important; }
 
     /* Popup carousel */
     .carousel { margin-bottom: 4px; }
     .carousel-img-wrap { display: flex; align-items: center; justify-content: center; }
     .carousel-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
     .carousel-btn {
-      background: var(--primary-yellow); color: var(--fill-white); border: none; border-radius: 50%;
+      background: var(--fill-blue); color: var(--fill-white); border: none; border-radius: 50%;
       width: 20px; height: 20px; min-width: 20px; font-size: 14px; font-weight: bold;
       line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
       transition: opacity 0.2s; padding: 0;
@@ -342,7 +361,7 @@
     }
     .grid-modal-overlay.show { display: flex; }
     .grid-modal-box {
-      background: var(--background-offwhite); border: 1px solid var(--primary-blue);
+      background: var(--fill-gray6); border: 1px solid var(--fill-blue);
       border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
       width: 100%; max-width: 400px; max-height: 90vh;
       position: relative; overflow: hidden;
@@ -356,7 +375,7 @@
       display: flex; align-items: center; justify-content: center;
       z-index: 10;
     }
-    .grid-modal-close:hover { color: var(--primary-blue); }
+    .grid-modal-close:hover { color: var(--fill-blue); }
     .grid-modal-content { padding: 0 16px 16px; overflow-y: auto; flex: 1; }
     .modal-header { display: flex; align-items: center; padding-right: 4px; margin-bottom: 8px; }
     .modal-info-section { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
@@ -369,9 +388,9 @@
     @media (max-width: 640px) {
       .logo h1 { font-size: 16px; }
       .header-info { display: none; }
-      #gridView { padding: 12px; }
-      .grid { grid-template-columns: 1fr; gap: 12px; }
-      .toolbar { padding: 8px 20px; }
+      #gridView { padding: 20px; }
+      .grid { grid-template-columns: 1fr; gap: 20px; }
+      .toolbar { padding: 12px 20px; }
       .search-box { width: 100%; flex-shrink: 1; }
       .view-btn .label { display: none; }
 
@@ -400,8 +419,8 @@
         align-items: center;
         background: var(--gray-16);
         border-radius: 8px;
-        padding: 8px 16px; gap: 8px;
-        margin: 12px 12px;
+        padding: 12px 0px; gap: 8px;
+        margin: 12px 20px;
       }
       .mobile-map-search input {
         background: none; border: none; outline: none;
@@ -410,9 +429,9 @@
         transform: scale(0.875); transform-origin: left center;
       }
       .mobile-map-search input::placeholder { color: var(--gray-64); }
-      .location-list { padding: 0 8px 8px; }
+      .location-list { padding: 20px 20px 20px; }
       .mobile-count-badge { font-family: 'Space Mono', monospace; font-size: 12px; color: var(--fill-black); white-space: nowrap; }
-      .mobile-count-badge strong { color: var(--primary-blue); font-size: 13px; }
+      .mobile-count-badge strong { color: var(--fill-blue); font-size: 13px; }
       .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }      body.map-view .toolbar { display: none; }
     }
 
@@ -428,15 +447,19 @@
     <div class="header-right">
       <div class="header-info" id="lastUpdated">載入中...</div>
       <div class="view-toggle">
-        <button class="view-btn" id="btnGrid" onclick="setView('grid')">☰ <span class="label">列表</span></button>
-        <button class="view-btn" id="btnMap" onclick="setView('map')">🗺 <span class="label">地圖</span></button>
+        <button class="view-btn" id="btnGrid" onclick="setView('grid')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M324-600q-15.3 0-25.65-10.29Q288-620.58 288-635.79t10.35-25.71Q308.7-672 324-672h456q15.3 0 25.65 10.29Q816-651.42 816-636.21t-10.35 25.71Q795.3-600 780-600H324Zm0 156q-15.3 0-25.65-10.29Q288-464.58 288-479.79t10.35-25.71Q308.7-516 324-516h456q15.3 0 25.65 10.29Q816-495.42 816-480.21t-10.35 25.71Q795.3-444 780-444H324Zm0 156q-15.3 0-25.65-10.29Q288-308.58 288-323.79t10.35-25.71Q308.7-360 324-360h456q15.3 0 25.65 10.29Q816-339.42 816-324.21t-10.35 25.71Q795.3-288 780-288H324ZM180-600q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-636q0 14-10.35 25T180-600Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-480q0 14-10.35 25T180-444Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-324q0 14-10.35 25T180-288Z"/></svg> <span class="label">列表</span></button>
+        <button class="view-btn" id="btnMap" onclick="setView('map')">
+        <svg class="map-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg>
+        <svg class="map-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M455.5-123.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-388q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg>
+        <span class="label">地圖</span>
+      </button>
       </div>
     </div>
   </header>
 
   <div class="toolbar">
     <div class="search-box">
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg>
+      <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
       <input type="text" id="searchInput" placeholder="搜尋 IP、縣市、場地..." />
       <button class="search-clear-btn" id="clearSearch"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
     </div>
@@ -445,8 +468,8 @@
 
   <div class="filter-bar">
     <button class="filter-chip active" data-filter="all">全部</button>
-    <button class="filter-chip" data-filter="抽卡機">🃏 抽卡機</button>
-    <button class="filter-chip" data-filter="相卡機">🖼️ 相卡機</button>
+    <button class="filter-chip" data-filter="抽卡機"><svg class="chip-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m612-404 31-107q3-11-1.05-21.88Q637.9-543.75 628-551l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-29.91-15.45Q110-250 100-277q-10-27 2.7-54.85L168-472v250Zm148 78q-31.35 0-53.67-20.5Q240-185 240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Zm-24-68 294-105-171-471-294 107 171 469Zm62-288Z"/></svg><svg class="chip-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機</button>
+    <button class="filter-chip" data-filter="相卡機"><svg class="chip-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26.18-21.5Q379.35-816 396-816h168.18q16.82 0 31.82 7.5t26 21.5l50 67h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg><svg class="chip-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機</button>
   </div>
 
   <div class="content">
@@ -580,7 +603,7 @@
           .addTo(map)
           .bindPopup(`
             <button class="popup-close-btn" onclick="map.closePopup()">✕</button>
-            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-bottom:8px;">${loc.type === '相卡機' ? '🖼️ 相卡機' : '🃏 抽卡機'}</div>
+            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-bottom:12px;">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
             <div class="modal-header">
               <div class="popup-title">${loc.name}</div>
             </div>
@@ -609,9 +632,9 @@
         const card = document.createElement('div');
         card.className = 'loc-card';
         card.innerHTML = `
-          <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '🖼️ 相卡機' : '🃏 抽卡機'}</div>
+          <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
           <div class="loc-name">${loc.name}</div>
-          ${loc.limited ? `<div class="loc-limited">${loc.limited}</div>` : ''}
+          ${loc.limited ? `<div class="loc-limited">期間限定：${loc.limited}</div>` : ''}
           <div class="loc-tags">
             ${loc.character ? `<span class="tag">${loc.character}</span>` : ''}
             ${loc.city ? `<span class="tag">${loc.city}</span>` : ''}
@@ -763,9 +786,9 @@
         card.className = 'loc-card-grid';
         card.innerHTML = `
           <div class="card-top">
-            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '🖼️ 相卡機' : '🃏 抽卡機'}</div>
+            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
             <div class="card-name">${loc.name}</div>
-            ${loc.limited ? `<div class="card-limited">${loc.limited}</div>` : ''}
+            ${loc.limited ? `<div class="card-limited">期間限定：${loc.limited}</div>` : ''}
             <div class="card-tags">
               ${loc.character ? `<span class="tag">${loc.character}</span>` : ''}
               ${loc.city ? `<span class="tag">${loc.city}</span>` : ''}
@@ -774,7 +797,7 @@
           </div>
           <div class="card-actions">
             <a href="${googleMapsUrl}" target="_blank" class="btn-gmaps">🗺️ 在 Google Maps 查看 →</a>
-            ${hasDetail ? `<button class="btn-expand" type="button">詳情 <i class="chevron">↗</i></button>` : ''}
+            ${hasDetail ? `<button class="btn-expand" type="button">詳情 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M312-312h132q15.3 0 25.65 10.29Q480-291.42 480-276.21t-10.35 25.71Q459.3-240 444-240H276q-15.3 0-25.65-10.35Q240-260.7 240-276v-168q0-15.3 10.29-25.65Q260.58-480 275.79-480t25.71 10.35Q312-459.3 312-444v132Zm336-336H516q-15.3 0-25.65-10.29Q480-668.58 480-683.79t10.35-25.71Q500.7-720 516-720h168q15.3 0 25.65 10.35Q720-699.3 720-684v168q0 15.3-10.29 25.65Q699.42-480 684.21-480t-25.71-10.35Q648-500.7 648-516v-132Z"/></svg></button>` : ''}
           </div>
         `;
 
@@ -937,7 +960,7 @@
       }
 
       document.getElementById('gridModalContent').innerHTML = `
-        <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-top:16px;margin-bottom:12px;">${loc.type === '相卡機' ? '🖼️ 相卡機' : '🃏 抽卡機'}</div>
+        <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-top:16px;margin-bottom:12px;">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
         <div class="modal-header">
           <div class="popup-title">${loc.name}</div>
         </div>
