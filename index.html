@@ -14,7 +14,7 @@
    function gtag(){dataLayer.push(arguments);}
    gtag('js', new Date());
 
-   gtag('config', 'G-1G91M8FLWQ');
+   gtag('config', 'G-29PN14JRK8');
   </script>
 
   <script type="application/ld+json">
@@ -565,7 +565,7 @@
   </div>
 
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <img id="lightboxImg" src="" />
+    <img id="lightboxImg" src="" alt="" />
   </div>
 
   <!-- Grid Detail Modal -->
@@ -667,14 +667,14 @@
         // 圖片 HTML（原始版 popup 樣式）
         let imgHtml = '';
         if (imgs.length === 1) {
-          imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" /></div>`;
+          imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" /></div>`;
         } else if (imgs.length > 1) {
           const cid = 'map-carousel-' + i;
           imgHtml = `
             <div class="popup-img-wrap">
               <div class="carousel" id="${cid}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
                 <div class="carousel-img-wrap">
-                  <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" />
+                  <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
                 </div>
                 <div class="carousel-controls">
                   <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${cid}">&#8249;</button>
@@ -847,12 +847,12 @@
         const cid = 'grid-c-' + i;
         let imageHtml = '';
         if (imgs.length === 1) {
-          imageHtml = `<div class="single-img-wrap"><img src="${imgs[0]}" data-lightbox="${imgs[0]}" loading="lazy"/></div>`;
+          imageHtml = `<div class="single-img-wrap"><img src="${imgs[0]}" data-lightbox="${imgs[0]}" loading="lazy" alt="${loc.name}"/></div>`;
         } else if (imgs.length > 1) {
           imageHtml = `
             <div class="carousel-grid" id="${cid}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
               <div class="carousel-grid-img-wrap">
-                <img src="${imgs[0]}" class="carousel-grid-img" data-lightbox="${imgs[0]}" loading="lazy"/>
+                <img src="${imgs[0]}" class="carousel-grid-img" data-lightbox="${imgs[0]}" loading="lazy" alt="${loc.name}"/>
               </div>
               <div class="carousel-controls-grid">
                 <button class="carousel-btn" data-grid-action="prev" data-grid-cid="${cid}">&#8249;</button>
@@ -1033,13 +1033,13 @@
       const mid = 'modal-carousel';
       let imgHtml = '';
       if (imgs.length === 1) {
-        imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" /></div>`;
+        imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" /></div>`;
       } else if (imgs.length > 1) {
         imgHtml = `
           <div class="popup-img-wrap">
             <div class="carousel" id="${mid}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
               <div class="carousel-img-wrap">
-                <img src="${imgs[0]}" class="carousel-img popup-img" data-lightbox="${imgs[0]}" />
+                <img src="${imgs[0]}" class="carousel-img popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
               </div>
               <div class="carousel-controls">
                 <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${mid}">&#8249;</button>
