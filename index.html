@@ -5,10 +5,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
-  <meta name="description" content="想知道臺灣哪裡有抽卡機和相卡機？來抽卡機在哪？Card Radar 搜搜吧！">
+  <meta name="description" content="想知道臺灣哪裡有抽卡機和相卡機？來抽卡機在哪 Card Radar 搜搜吧！快速找到附近的抽卡機位置與最新機台資訊">
 
   <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-29PN14JRK8"></script>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1G91M8FLWQ"></script>
   <script>
    window.dataLayer = window.dataLayer || [];
    function gtag(){dataLayer.push(arguments);}
@@ -17,9 +17,36 @@
    gtag('config', 'G-1G91M8FLWQ');
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "抽卡機在哪！Card Radar",
+    "alternateName": "Card Radar TW",
+    "url": "https://cardradartw.vercel.app",
+    "description": "想知道臺灣哪裡有抽卡機和相卡機？快來抽卡機在哪 Card Radar 搜搜吧！快速找到附近的抽卡機位置與最新機台資訊",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "All",
+    "inLanguage": "zh-TW",
+    "isAccessibleForFree": true,
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "TWD"
+    },
+    "areaServed": {
+      "@type": "Country",
+      "name": "Taiwan"
+    }
+  }
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
+  <noscript><link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" /></noscript>
 
   <style>
     :root {
@@ -41,7 +68,7 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
-      font-family: 'Chiron GoRound TC', sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
       background: var(--fill-gray6);
       color: var(--fill-black);
       height: 100dvh;
@@ -80,7 +107,7 @@
     .view-btn {
       padding: 8px 16px;
       font-size: 14px;
-      font-family: 'Chiron GoRound TC', sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-weight: 400;
       background: none; border: none;
       color: var(--fill-black); cursor: pointer;
@@ -110,7 +137,7 @@
     }
     .search-box input {
       background: none; border: none; outline: none;
-      color: var(--fill-black); font-family: 'Chiron GoRound TC', sans-serif;
+      color: var(--fill-black); font-family: 'Noto Sans TC', sans-serif;
       font-size: 14px; width: 100%;
     }
     .search-box input::placeholder { color: var(--fill-gray-64); }
@@ -121,7 +148,7 @@
     }
     .search-clear-btn { display: none; background: none; border: none; padding: 0; cursor: pointer; color: var(--fill-black); flex-shrink: 0; line-height: 0; }
     .search-clear-btn:hover { color: var(--fill-blue); }
-    .count-badge { font-family: 'Chiron GoRound TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
+    .count-badge { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
     .count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
 
     /* ===== Filter Chips ===== */
@@ -136,7 +163,7 @@
       padding: 8px 16px;
       font-size: 14px;
       line-height: 1.2;
-      font-family: 'Chiron GoRound TC', sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
       font-weight: 400;
       background: var(--gray-8);
       border: 1px solid var(--gray-16);
@@ -216,7 +243,7 @@
     .btn-gmaps {
       display: inline-flex; align-items: center; gap: 5px;
       color: var(--fill-blue); font-size: 14px; font-weight: 400;
-      font-family: 'Chiron GoRound TC', sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
       text-decoration: underline; text-underline-offset: 3px;
       background: none; border: none; padding: 0;
       transition: opacity 0.2s; white-space: nowrap;
@@ -227,7 +254,7 @@
       padding: 4px 8px;
       background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
       border-radius: 4px; color: var(--fill-blue); font-size: 12px;
-      font-family: 'Chiron GoRound TC', sans-serif; cursor: pointer;
+      font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
       transition: opacity 0.2s;
       margin-left: auto;
     }
@@ -303,7 +330,7 @@
       background: var(--fill-gray6); color: var(--fill-black);
       border: 1px solid var(--fill-blue); border-radius: 16px;
       box-shadow: 0 8px 32px rgba(0,0,0,0.5);
-      font-family: 'Chiron GoRound TC', sans-serif;
+      font-family: 'Noto Sans TC', sans-serif;
     }
     .leaflet-popup-content { margin: 16px !important; position: relative; max-height: 70vh; overflow-y: auto; }
     .popup-close-btn {
@@ -445,13 +472,13 @@
       }
       .mobile-map-search input {
         background: none; border: none; outline: none;
-        color: var(--fill-gray-64); font-family: 'Chiron GoRound TC', sans-serif;
+        color: var(--fill-gray-64); font-family: 'Noto Sans TC', sans-serif;
         font-size: 16px; width: 100%;
         transform: scale(0.875); transform-origin: left center;
       }
       .mobile-map-search input::placeholder { color: var(--gray-64); }
       .location-list { padding: 20px 20px 20px; }
-      .mobile-count-badge { font-family: 'Chiron GoRound TC', sans-serif; white-space: nowrap; }
+      .mobile-count-badge { font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
       .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
       .mobile-count-badge span { color: var(--fill-black); font-size: 14px; }
       .last-updated-list {
@@ -478,7 +505,7 @@
 
   <header>
     <div class="logo">
-      <img class="logo-icon" src="data:image/png;base64,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" alt="logo" />
+      <img class="logo-icon" src="logo.svg" alt="logo" />
       <h1>抽卡機在哪！<span>Card Radar</span></h1>
     </div>
     <div class="header-right">
@@ -716,6 +743,9 @@
       if (!url) return '';
       const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
       if (match) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      if (url.includes('res.cloudinary.com')) {
+        return url.replace('/upload/', '/upload/w_800,q_auto,f_auto/');
+      }
       return url;
     }
 
