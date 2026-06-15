@@ -794,13 +794,13 @@
             addr:      cols[4] || '',
             lat:       parseFloat(cols[5]),
             lng:       parseFloat(cols[6]),
-            limited:   cols[7] || '',
-            character: cols[8] || '',
-            image:     cols[9] || '',
-            edition:   cols[10] || '',
-            perDraw:   cols[11] || '',
-            note:      cols[12] || '',
-            hours:     cols[13] || '',
+            character: cols[7] || '',
+            edition:   cols[8] || '',
+            perDraw:   cols[9] || '',
+            limited:   cols[10] || '',
+            hours:     cols[11] || '',
+            image:     cols[12] || '',
+            note:      cols[13] || '',
           };
         }).filter(loc => loc.name && !isNaN(loc.lat) && !isNaN(loc.lng));
 
