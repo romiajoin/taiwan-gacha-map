@@ -135,10 +135,11 @@
       width: 400px;
       flex-shrink: 0;
     }
+    .search-box-mobile { display: none; }
     .search-box input {
       background: none; border: none; outline: none;
       color: var(--fill-black); font-family: 'Noto Sans TC', sans-serif;
-      font-size: 14px; width: 100%;
+      font-size: 16px; width: 100%;
     }
     .search-box input::placeholder { color: var(--fill-gray-64); }
     .search-box input:-webkit-autofill,
@@ -193,7 +194,7 @@
     .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
 
     @media (max-width: 640px) {
-      .filter-bar { padding: 16px 20px 16px; gap: 8px; overflow-x: auto; }
+      .filter-bar { padding: 12px 20px 12px; gap: 8px; overflow-x: auto; }
       .filter-bar::-webkit-scrollbar { display: none; }
     }
 
@@ -302,7 +303,7 @@
     }
     .map-scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
     .location-list { padding: 20px 20px; }
-    .map-scroll-wrapper::-webkit-scrollbar { width: 4px; }
+    .map-scroll-wrapper::-webkit-scrollbar { width: 0px; }
     .map-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
     .map-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
 
@@ -425,39 +426,74 @@
       .logo h1 { font-size: 16px; }
       .view-btn { padding: 8px 16px; }
       .view-btn .label { display: none; }
-      #gridView { padding: 20px; }
+      #gridView { padding: 12px 20px 20px; }
       .grid { grid-template-columns: 1fr; gap: 16px; }
-      .toolbar { padding: 16px 20px 0px 20px; }
+      .toolbar { padding: 12px 20px 12px 20px; }
       .search-box { width: 100%; flex-shrink: 1; }
+      .search-box-desktop { display: none; }
+      .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
+      .search-box-mobile input { font-size: 16px; }
 
       /* 地圖模式：顯示 filter chips，隱藏搜尋框與地點數 */
       body.map-view .toolbar { display: none; }
 
-      /* 地圖模式：上地圖下列表 */
+      /* 地圖模式：bottom sheet */
       #mapView {
         flex-direction: column;
         position: relative;
       }
       #map {
         flex: 1;
-        min-height: 200px;
-        order: -1;
+        min-height: 0;
+        order: unset;
       }
       .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
         width: 100%;
+        height: 160px;
         border-right: none;
-        border-top: 1px solid var(--gray-16);
-        height: 260px;
-        flex-shrink: 0;
+        border-top: none;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.10);
+        transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        display: flex;
         flex-direction: column;
         overflow: hidden;
+        background: var(--fill-gray6);
+      }
+      /* Grid view 時隱藏 sidebar */
+      body:not(.map-view) .sidebar {
+        display: none;
+      }
+      .sidebar.sheet-open {
+        height: 50vh;
+      }
+      .sheet-handle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 8px 0px 0px 0px;
+        background: var(--fill-gray5);
+        cursor: grab;
+        flex-shrink: 0;
+        touch-action: none;
+      }
+      .sheet-handle-bar {
+        width: 36px;
+        height: 4px;
+        background: var(--fill-gray-16);
+        border-radius: 2px;
       }
       .sidebar-header { padding: 10px 16px 6px; }
       .map-search-row {
         display: flex;
         align-items: center;
-        gap: 16px;
-        padding: 16px 20px;
+        gap: 8px;
+        padding: 12px 20px 12px;
         background: var(--fill-gray5);
         flex-shrink: 0;
       }
@@ -467,7 +503,7 @@
         align-items: center;
         background: var(--fill-gray6);
         border-radius: 999px;
-        padding: 16px 16px;
+        padding: 12px 16px;
         gap: 8px;
       }
       .mobile-map-search input {
@@ -477,7 +513,7 @@
         transform: scale(0.875); transform-origin: left center;
       }
       .mobile-map-search input::placeholder { color: var(--gray-64); }
-      .location-list { padding: 20px 20px 20px; }
+      .location-list { padding: 12px 20px 20px 20px; }
       .mobile-count-badge { font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
       .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
       .mobile-count-badge span { color: var(--fill-black); font-size: 14px; }
@@ -486,7 +522,7 @@
         position: static;
         font-family: 'Space Mono', monospace;
         font-size: 12px; font-weight: 400; color: var(--fill-black);
-        text-align: center; padding: 0px 0px 20px 0px;
+        text-align: center; padding: 0px 0px 12px 0px;
       }
       body.map-view .last-updated-list { display: none; }
       .last-updated-map {
@@ -494,7 +530,7 @@
         position: static;
         font-family: 'Space Mono', monospace;
         font-size: 12px; font-weight: 400; color: var(--fill-black);
-        text-align: center; padding: 20px 20px 0px 20px;
+        text-align: center; padding: 12px 20px 0px 20px;
       }
       .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }
     }
@@ -522,10 +558,15 @@
   </header>
 
   <div class="toolbar">
-    <div class="search-box">
+    <div class="search-box search-box-desktop">
       <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
       <input type="text" id="searchInput" placeholder="搜尋 IP、縣市、場地..." />
       <button class="search-clear-btn" id="clearSearch"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
+    </div>
+    <div class="search-box search-box-mobile">
+      <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
+      <input type="text" id="searchInputMobile" placeholder="搜尋 IP、縣市、場地..." />
+      <button class="search-clear-btn" id="clearSearchMobile"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
     </div>
     <div class="count-badge"><strong id="countBadge">0</strong> 個地點</div>
   </div>
@@ -547,6 +588,9 @@
     <!-- Map View -->
     <div id="mapView">
       <aside class="sidebar">
+        <div class="sheet-handle">
+          <div class="sheet-handle-bar"></div>
+        </div>
         <div class="map-search-row">
           <div class="mobile-map-search">
             <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
@@ -602,6 +646,8 @@
 
       if (view === 'map') {
         initMap();
+        peekSheet();
+        initBottomSheet();
         setTimeout(() => { if (map) map.invalidateSize(); }, 50);
       }
     }
@@ -948,24 +994,45 @@
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
       applyFilters();
     });
-    document.getElementById('mapSearchInput').addEventListener('input', function () {
-      document.getElementById('clearMapSearch').style.display = this.value ? 'block' : 'none';
+    document.getElementById('searchInputMobile').addEventListener('input', function () {
+      document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
       document.getElementById('searchInput').value = this.value;
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
       applyFilters();
     });
+    document.getElementById('mapSearchInput').addEventListener('input', function () {
+      document.getElementById('clearMapSearch').style.display = this.value ? 'block' : 'none';
+      document.getElementById('searchInput').value = this.value;
+      document.getElementById('searchInputMobile').value = this.value;
+      document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
+      document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
+      applyFilters();
+    });
     document.getElementById('clearSearch').addEventListener('click', function () {
+      document.getElementById('searchInput').value = '';
+      document.getElementById('searchInputMobile').value = '';
+      document.getElementById('mapSearchInput').value = '';
+      this.style.display = 'none';
+      document.getElementById('clearSearchMobile').style.display = 'none';
+      document.getElementById('clearMapSearch').style.display = 'none';
+      applyFilters();
+    });
+    document.getElementById('clearSearchMobile').addEventListener('click', function () {
+      document.getElementById('searchInputMobile').value = '';
       document.getElementById('searchInput').value = '';
       document.getElementById('mapSearchInput').value = '';
       this.style.display = 'none';
+      document.getElementById('clearSearch').style.display = 'none';
       document.getElementById('clearMapSearch').style.display = 'none';
       applyFilters();
     });
     document.getElementById('clearMapSearch').addEventListener('click', function () {
       document.getElementById('searchInput').value = '';
+      document.getElementById('searchInputMobile').value = '';
       document.getElementById('mapSearchInput').value = '';
       this.style.display = 'none';
       document.getElementById('clearSearch').style.display = 'none';
+      document.getElementById('clearSearchMobile').style.display = 'none';
       applyFilters();
     });
 
@@ -1076,6 +1143,54 @@
       if (e && e.target !== document.getElementById('gridModal')) return;
       document.getElementById('gridModal').classList.remove('show');
       document.body.style.overflow = '';
+    }
+
+    // =============================================
+    // 📋 Bottom Sheet（mobile 地圖模式）
+    // =============================================
+    function openSheet() {
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.style.height = '';
+      sidebar.classList.add('sheet-open');
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+    }
+
+    function peekSheet() {
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.style.height = '';
+      sidebar.classList.remove('sheet-open');
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+    }
+
+    function initBottomSheet() {
+      const sidebar = document.querySelector('.sidebar');
+      const handle = document.querySelector('.sheet-handle');
+      if (!handle || handle.dataset.sheetInit) return;
+      handle.dataset.sheetInit = '1';
+
+      let startY = 0;
+      let isOpen = false;
+
+      handle.addEventListener('touchstart', function(e) {
+        startY = e.touches[0].clientY;
+        sidebar.style.transition = 'none';
+      }, { passive: true });
+
+      handle.addEventListener('touchmove', function(e) {
+        const dy = startY - e.touches[0].clientY;
+        const baseHeight = isOpen ? window.innerHeight * 0.5 : 120;
+        const newHeight = Math.min(Math.max(baseHeight + dy, 120), window.innerHeight * 0.5);
+        sidebar.style.height = newHeight + 'px';
+      }, { passive: true });
+
+      handle.addEventListener('touchend', function(e) {
+        sidebar.style.transition = '';
+        const dy = startY - e.changedTouches[0].clientY;
+        if (!isOpen && dy > 50) { isOpen = true; openSheet(); }
+        else if (isOpen && dy < -50) { isOpen = false; peekSheet(); }
+        else { isOpen ? openSheet() : peekSheet(); }
+      });
+
     }
 
     function openLightbox(src) {
