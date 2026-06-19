@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/06/05
+**最後更新：** 2026/06/19（v17）
 
 ---
 
@@ -31,20 +31,21 @@
 
 | 欄 | 欄位 | 說明 | 必填 |
 |----|------|------|------|
-| A | 類型 | 機台類型（抽卡機 / 相卡機） | ✅ |
-| B | 店名 | 活動或地點名稱 | ✅ |
-| C | 場地 | 所在建築或商場（如：三創生活 7F） | ❌ |
-| D | 縣市 | 縣市名稱（如：台北市） | ❌ |
-| E | 地址 | 詳細地址（含縣市） | ✅ |
-| F | 緯度 | 數字，用於地圖定位 | ✅ |
-| G | 經度 | 數字，用於地圖定位 | ✅ |
-| H | 期間限定 | 活動日期（如：2026/05/29～2026/07/23） | ❌ |
-| I | IP | 熱門角色或 IP 名稱 | ❌ |
-| J | 圖片 | Cloudinary 網址（多張用逗號分隔） | ❌ |
-| K | 彈數 | 如：第一彈,第二彈 | ❌ |
-| L | 一抽張數 | 如：2張 | ❌ |
-| M | 備註 | 補充說明 | ❌ |
-| N | 營業時間 | 如：週一至週日 11:00–22:00 | ❌ |
+| A | id | 流水號，分享連結用（手動填入，勿用公式） | ✅ |
+| B | 類型 | 機台類型（抽卡機 / 相卡機） | ✅ |
+| C | 店名 | 活動或地點名稱 | ✅ |
+| D | 場地 | 所在建築或商場（如：三創生活 7F） | ❌ |
+| E | 縣市 | 縣市名稱（如：台北市） | ❌ |
+| F | 地址 | 詳細地址（含縣市） | ✅ |
+| G | 緯度 | 數字，用於地圖定位 | ✅ |
+| H | 經度 | 數字，用於地圖定位 | ✅ |
+| I | 期間限定 | 活動日期（如：2026/05/29～2026/07/23） | ❌ |
+| J | IP | 熱門角色或 IP 名稱 | ❌ |
+| K | 圖片 | Cloudinary 網址（多張用逗號分隔） | ❌ |
+| L | 彈數 | 如：第一彈,第二彈 | ❌ |
+| M | 一抽張數 | 如：2張 | ❌ |
+| N | 備註 | 補充說明 | ❌ |
+| O | 營業時間 | 如：週一至週日 11:00–22:00 | ❌ |
 
 > 緯度經度可以用 Google Maps 點地點後取得。  
 > 欄位為空時，對應資訊不顯示，不影響版面。
@@ -53,8 +54,19 @@
 
 ## 功能規格
 
-### 地圖
-- 以台灣為中心（23.6N, 121.0E），預設縮放層級 8
+### Header
+- 右側：最後更新時間 + View Toggle + divider + 「回報表單」text link
+- 回報表單：灰色文字（`--fill-gray`），hover 變藍，`target="_blank"` 開新分頁
+- View Toggle：768px 以下隱藏文字標籤，只顯示 icon；padding 調整為 `8px 10px`
+
+### 分享單一地點
+- URL 格式：`cardradartw.vercel.app/?id=<id>`
+- 地圖 popup 與 grid modal 各有一個分享按鈕（share SVG icon 在右，樣式同詳情按鈕）
+- 手機：`navigator.share()` 跳出原生分享選單
+- 桌機：`clipboard.writeText()` + toast 提示「已複製連結！」
+- 開啟分享連結時：資料載入後偵測 `?id=` 參數，自動開對應地點的 grid modal
+
+### 地圖（23.6N, 121.0E），預設縮放層級 8
 - 地標圖示：🎰 emoji（52×52px）
 - 點地標 → 跳出彈窗（Leaflet popup）
 - 手機版 popup `max-height: 260px`，支援捲動
@@ -83,20 +95,28 @@
 - 點卡片 → 地圖飛到該地點並打開彈窗
 
 ### 篩選
-- Toolbar 下方獨立一排 Filter Chips：`[全部] [🃏 抽卡機] [🖼️ 相卡機]`
+- Toolbar 下方獨立一排 Filter Chips：`[全部] [playing_cards 抽卡機] [photo_camera 相卡機]`
+- Icon 使用 Material Symbols inline SVG；normal 狀態用 FILL0（outline），active 狀態切換為 FILL1（fill）
 - 篩選與搜尋同時作用（交集）
 - 類型 Badge 顯示於：列表卡片左上角、詳情 Modal、地圖 Popup
-  - 抽卡機：背景 `#00c2a8`，黑字，`border-radius: 4px`
-  - 相卡機：背景 `#ffcf48`，黑字，`border-radius: 4px`
+  - 抽卡機：背景 `#00c2a8`，黑字，`border-radius: 4px`，icon：Material Symbols playing_cards（FILL1）
+  - 相卡機：背景 `#ffcf48`，黑字，`border-radius: 4px`，icon：Material Symbols photo_camera（FILL1）
 
 ### 搜尋
 - 搜尋框可搜尋：店名、地址、縣市、IP 角色、場地
 - 即時過濾，不需按 Enter
-- 地圖模式手機版：搜尋框在列表區頂部
+- 地圖模式手機版：搜尋框在 sidebar 頂部（`.map-search-row`，pill 形狀，`border-radius: 999px`）；count badge 在 pill 外側右邊
 - 地圖模式桌機版：搜尋框在頂部 toolbar
+- 列表模式手機版：獨立的 `#searchInputMobile`（`.search-box-mobile`，`font-size: 16px` 防 iOS zoom）
+- 列表模式桌機版：`#searchInput`（`.search-box-desktop`）
+
+### 最後更新資訊
+- PC header：`#lastUpdated`（`.header-info`，Space Mono 14px，fill-black）
+- Mobile list mode：`#listLastUpdated`，位於 `#gridView` 內、卡片上方，隨卡片捲動（12px / weight 400 / text-align center）
+- Mobile map mode：`#mapLastUpdated`，位於 `.map-scroll-wrapper` 內、卡片上方，隨列表捲動（同上樣式）
 
 ### 地點數量顯示
-- Toolbar：`74 個地點`（數字青色 `#00c2a8`，20px bold）
+- Toolbar：`74 個地點`（數字青色 `#00c2a8`，20px bold；「個地點」文字同為 20px regular）
 - 地圖手機版列表區右側
 
 ---
@@ -106,13 +126,20 @@
 | 裝置 | 版面 |
 |------|------|
 | 桌機（>640px） | Header + Toolbar + 主內容區（Grid 或 Map+Sidebar 並排） |
-| 手機（≤640px） | Header + 主內容區（Map 上方、Sidebar 下方固定 260px） |
+| 手機（≤640px） | Header + 主內容區（地圖全螢幕 + 底部 bottom sheet） |
 
 ### 手機版地圖模式
-- Toolbar 隱藏，搜尋欄移至 sidebar 頂部（`border-radius: 8px`，半透明灰底）
-- 地圖：`flex: 1` 佔滿剩餘空間
-- Sidebar：固定 260px，顯示約 1.5 張卡片
-- Sidebar 上方分隔線：`rgba(235,235,245,0.16)`
+- Filter bar（全部 / 抽卡機 / 相卡機）顯示於地圖上方（toolbar 隱藏，filter-bar 保留）
+- 地圖：`flex: 1` 佔滿整個內容區高度
+- Sidebar（bottom sheet）：`position: fixed; bottom: 0`，疊在地圖上方
+  - **Peek state**（預設）：`height: 154px`，顯示 handle bar + search row + 第一張卡片微露
+  - **Open state**：`height: 50vh`，往上拖 handle 展開
+  - 內部結構由上至下：
+    1. `.sheet-handle`（drag handle pill）
+    2. `.map-search-row`（pill 搜尋 + 地點數）
+    3. `.map-scroll-wrapper`（`flex: 1; overflow-y: auto`）
+       - `#mapLastUpdated`（最後更新，隨列表捲動）
+       - `.location-list`（地點卡片）
 
 ---
 
@@ -136,9 +163,13 @@
 - 最後更新文字：白色
 
 ### Toolbar
-- 背景：`rgba(142,142,147,0.16)`（無底線）
-- 搜尋框：`flex: 1`（佔滿寬度）、`border-radius: 8px`、半透明白底與邊框
-- Placeholder 顏色：`#8892b0`
+- 背景：`rgba(60,60,67,0.08)`（`--fill-gray-8`）
+- 搜尋框（PC）：`flex: 1`（佔滿寬度）、`border-radius: 9999px`、半透明灰底
+- 搜尋框（Mobile map sidebar）：`.map-search-row` 獨立元件，`border-radius: 999px`，count badge 在 pill 外
+- 搜尋 icon：Material Symbols search SVG
+- 清除按鈕：Material Symbols cancel（FILL1）SVG，有輸入時顯示
+- Placeholder 顏色：`rgba(60,60,67,0.64)`（`--fill-gray-64`）
+- 搜尋框修復 webkit autofill 藍底（inset box-shadow 覆蓋）
 
 ### View Toggle
 - 啟用狀態背景：`#00c2a8`
