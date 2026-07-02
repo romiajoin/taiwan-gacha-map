@@ -94,14 +94,14 @@
     }
     .logo h1 { font-size: 24px; font-weight: 700; letter-spacing: 1px; color: var(--fill-black); }
     .logo h1 span { color: var(--fill-blue); }
-    .header-right { display: flex; align-items: center; gap: 16px; }
+    .header-right { display: flex; align-items: center; gap: 12px; }
     .header-info { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--fill-black); }
 
     /* View Toggle */
     .view-toggle {
       display: flex;
       background: none; border: 1px solid var(--fill-blue);
-      border-radius: 8px;
+      border-radius: 999px;
       overflow: hidden;
     }
     .view-btn {
@@ -126,14 +126,14 @@
     /* ===== Toolbar ===== */
     .toolbar {
       padding: 20px 20px;
-      display: flex; align-items: center; gap: 16px;
+      display: flex; align-items: center; gap: 8px;
       flex-shrink: 0;
-      background: var(--fill-gray5);
+      background: var(--fill-gray6);
     }
     .search-box {
       display: flex; align-items: center;
-      background: var(--fill-gray6);
-      border-radius: 9999px; gap: 12px;
+      background: var(--fill-white);
+      border-radius: 9999px; gap: 8px;
       padding: 16px 16px;
       width: 400px;
       flex-shrink: 0;
@@ -153,7 +153,7 @@
     .search-clear-btn { display: none; background: none; border: none; padding: 0; cursor: pointer; color: var(--fill-black); flex-shrink: 0; line-height: 0; }
     .search-clear-btn:hover { color: var(--fill-blue); }
     .count-badge { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
-    .count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
+    .count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; }
 
     /* ===== Visitor Banner ===== */
     .visitor-banner {
@@ -173,33 +173,129 @@
       margin: 0 3px;
     }
 
-    /* ===== Filter Chips ===== */
+    /* ===== Filter Pills (dropdown) ===== */
     .filter-bar {
-      background: var(--fill-gray5);
+      background: var(--fill-gray6);
       padding: 0px 20px 20px;
-      display: flex; align-items: center; gap: 16px;
+      display: flex; align-items: center; gap: 12px;
       flex-shrink: 0;
     }
-    .filter-chip {
-      display: inline-flex; align-items: center; gap: 4px;
-      padding: 8px 16px;
+    .filter-scroll {
+      display: flex; align-items: center; gap: 12px;
+      min-width: 0;
+    }
+    .filter-pill-group { position: relative; flex-shrink: 0; }
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 8px 12px 8px 16px;
       font-size: 14px;
       line-height: 1.2;
       font-family: 'Noto Sans TC', sans-serif;
       font-weight: 400;
-      background: var(--gray-8);
-      border: 1px solid var(--gray-16);
-      border-radius: 20px;
-      color: var(--black);
+      background: var(--fill-white);
+      border: none;
+      border-radius: 9999px;
+      color: var(--fill-black);
       cursor: pointer;
-      transition: background 0.18s, color 0.18s, border-color 0.18s;
+      transition: background 0.18s, color 0.18s;
       white-space: nowrap;
     }
-    .filter-chip:hover { color: var(--fill-blue); border-color: var(--fill-blue); font-weight: 500; }
-    .filter-chip.active { background: var(--fill-blue); color: var(--fill-white); border-color: var(--fill-blue); }
-    .chip-icon-fill { display: none; }
-    .filter-chip.active .chip-icon-outline { display: none; }
-    .filter-chip.active .chip-icon-fill { display: inline; }
+    @media (hover: hover) {
+      .filter-pill:hover { color: var(--fill-blue); }
+    }
+    .filter-pill.active { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+    .filter-pill .pill-chevron { flex-shrink: 0; transition: transform 0.18s; }
+    .filter-pill.open .pill-chevron { transform: rotate(180deg); }
+    .filter-clear-link {
+      font-size: 14px;
+      color: var(--fill-black);
+      text-decoration: none;
+      cursor: pointer;
+      background: none; border: none; font-family: 'Noto Sans TC', sans-serif;
+      white-space: nowrap;
+    }
+    @media (hover: hover) {
+      .filter-clear-link:hover { color: var(--fill-blue); }
+    }
+
+    @media (min-width: 769px) {
+      .filter-clear-link { margin-left: 12px; }
+    }
+
+    /* Desktop dropdown panel */
+    .filter-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: var(--fill-white);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 20px;
+      width: max-content;
+      max-width: 320px;
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 1200;
+    }
+    .filter-panel.open { display: block; }
+    .filter-panel-options { display: flex; flex-wrap: wrap; gap: 12px; }
+    .filter-option {
+      padding: 8px 16px;
+      border-radius: 16.5px;
+      border: none;
+      background: var(--fill-blue-8);
+      color: var(--fill-blue);
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .filter-option:hover { background: var(--fill-blue-16); }
+    .filter-option.selected { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+
+    /* Mobile filter sheet */
+    .filter-sheet-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.32);
+      z-index: 1100;
+    }
+    .filter-sheet-overlay.show { display: block; }
+    .filter-sheet {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      max-height: 40vh;
+      background: var(--fill-gray6);
+      border-radius: 16px 16px 0 0;
+      z-index: 1101;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .filter-sheet-header {
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      padding: 20px 20px 16px;
+    }
+    .filter-sheet-title { font-size: 16px; font-weight: 500; color: var(--fill-black); }
+    .filter-sheet-close {
+      position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--fill-black);
+      line-height: 0; padding: 0;
+    }
+    .filter-sheet-body {
+      overflow-y: auto;
+      padding: 8px 20px 20px;
+    }
+    .filter-sheet-options {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: flex-start;
+      max-width: 100%;
+      margin: 0 auto;
+    }
 
     /* Badge */
     .type-badge {
@@ -208,15 +304,17 @@
       gap: 4px;
       align-self: flex-start;
       font-size: 12px; font-weight: 500;
-      padding: 4px 8px; border-radius: 9999px;
+      padding: 4px 8px; border-radius: 8px;
       color: var(--fill-black);
     }
     .type-badge.gacha { background: var(--fill-white); border: 1px solid var(--fill-orange); color: var(--fill-orange); }
     .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
 
     @media (max-width: 640px) {
-      .filter-bar { padding: 12px 20px 12px; gap: 8px; overflow-x: auto; }
-      .filter-bar::-webkit-scrollbar { display: none; }
+      .filter-bar { padding: 4px 20px 12px 0; gap: 0; }
+      .filter-scroll { overflow-x: auto; gap: 12px; padding-left: 20px; flex: 1; min-width: 0; }
+      .filter-scroll::-webkit-scrollbar { display: none; }
+      .filter-clear-link { flex-shrink: 0; margin-left: 12px; }
     }
 
     /* ===== Content ===== */
@@ -257,7 +355,7 @@
     .card-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; }
     .card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
     .tag {
-      font-size: 14px; padding: 4px 8px; border-radius: 20px;
+      font-size: 14px; padding: 4px 8px; border-radius: 8px;
       background: var(--fill-gray-8); color: var(--fill-black);
       border: 1px solid var(--fill-gray-64);
     }
@@ -273,9 +371,9 @@
     .btn-gmaps:hover { opacity: 0.75; }
     .btn-expand {
       display: inline-flex; align-items: center; gap: 2px;
-      padding: 4px 8px;
+      padding: 8px 12px;
       background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
-      border-radius: 4px; color: var(--fill-blue); font-size: 12px;
+      border-radius: 999px; color: var(--fill-blue); font-size: 12px;
       font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
       transition: opacity 0.2s;
       margin-left: auto;
@@ -369,7 +467,7 @@
     .popup-limited {
       display: inline-block; padding: 4px 8px;
       background: var(--fill-gray-8); border: 1px solid var(--fill-gray-64);
-      border-radius: 9999px; color: var(--fill-black); font-size: 14px; font-weight: 400;
+      border-radius: 8px; color: var(--fill-black); font-size: 14px; font-weight: 400;
       margin-top: 4px;
     }
     .popup-img-wrap {
@@ -389,9 +487,9 @@
     .popup-actions .popup-gmaps-link { display: inline-flex; margin-top: 0; flex: 1; }
     .popup-share-btn {
       display: inline-flex; align-items: center; gap: 2px;
-      padding: 4px 8px;
+      padding: 8px 12px;
       background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
-      border-radius: 4px; color: var(--fill-blue); font-size: 12px;
+      border-radius: 999px; color: var(--fill-blue); font-size: 12px;
       font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
       transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0;
     }
@@ -406,9 +504,9 @@
     #share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
     /* Popup carousel */
-    .carousel { margin-bottom: 4px; }
+    .carousel { margin-bottom: 0px; }
     .carousel-img-wrap { display: flex; align-items: center; justify-content: center; width: 100%; }
-    .carousel-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
+    .carousel-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
     .carousel-btn {
       background: var(--fill-blue); color: var(--fill-white); border: none; border-radius: 50%;
       width: 20px; height: 20px; min-width: 20px; font-size: 14px; font-weight: bold;
@@ -473,8 +571,10 @@
       .search-box-desktop { display: none; }
       .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
       .search-box-mobile input { font-size: 16px; }
-      .filter-bar { padding: 12px 20px 12px; gap: 8px; overflow-x: auto; }
-      .filter-bar::-webkit-scrollbar { display: none; }
+      .filter-bar { padding: 4px 20px 12px 0; gap: 0; }
+      .filter-scroll { overflow-x: auto; gap: 12px; padding-left: 20px; flex: 1; min-width: 0; }
+      .filter-scroll::-webkit-scrollbar { display: none; }
+      .filter-clear-link { flex-shrink: 0; margin-left: 12px; }
       .last-updated-list-row {
         display: flex; align-items: center; justify-content: center;
         gap: 8px; padding-bottom: 20px;
@@ -503,7 +603,7 @@
       .view-btn { padding: 8px 16px; }
       .view-btn .label { display: none; }
       #gridView { padding: 12px 20px 20px; }
-      .grid { grid-template-columns: 1fr; gap: 16px; }
+      .grid { grid-template-columns: 1fr; gap: 20px; }
       .toolbar { padding: 12px 20px 12px 20px; }
       .search-box { width: 100%; flex-shrink: 1; }
       .search-box-desktop { display: none; }
@@ -553,7 +653,7 @@
         justify-content: center;
         align-items: center;
         padding: 8px 0px 0px 0px;
-        background: var(--fill-gray5);
+        background: var(--fill-gray-6);
         cursor: grab;
         flex-shrink: 0;
         touch-action: none;
@@ -570,14 +670,14 @@
         align-items: center;
         gap: 8px;
         padding: 12px 20px 12px;
-        background: var(--fill-gray5);
+        background: var(--fill-gray6);
         flex-shrink: 0;
       }
       .mobile-map-search {
         flex: 1;
         display: flex;
         align-items: center;
-        background: var(--fill-gray6);
+        background: var(--fill-white);
         border-radius: 999px;
         padding: 12px 16px;
         gap: 8px;
@@ -591,7 +691,7 @@
       .mobile-map-search input::placeholder { color: var(--gray-64); }
       .location-list { padding: 12px 20px 20px 20px; }
       .mobile-count-badge { font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
-      .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
+      .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; }
       .mobile-count-badge span { color: var(--fill-black); font-size: 14px; }
       .last-updated-list-row {
         display: flex; align-items: center; justify-content: center;
@@ -653,10 +753,17 @@
     <div class="count-badge"><strong id="countBadge">0</strong> 個地點</div>
   </div>
 
-  <div class="filter-bar">
-    <button class="filter-chip active" data-filter="all">全部</button>
-    <button class="filter-chip" data-filter="抽卡機"><svg class="chip-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m612-404 31-107q3-11-1.05-21.88Q637.9-543.75 628-551l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-29.91-15.45Q110-250 100-277q-10-27 2.7-54.85L168-472v250Zm148 78q-31.35 0-53.67-20.5Q240-185 240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Zm-24-68 294-105-171-471-294 107 171 469Zm62-288Z"/></svg><svg class="chip-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機</button>
-    <button class="filter-chip" data-filter="相卡機"><svg class="chip-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5t-48 119q0 69.5 48 118.5t120 49Zm0-72q-42 0-69-28.13T384-433q0-39.9 27-67.45Q438-528 480-528t69 27.55q27 27.55 27 67.45 0 40.74-27 68.87Q522-336 480-336ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26.18-21.5Q379.35-816 396-816h168.18q16.82 0 31.82 7.5t26 21.5l50 67h120q29.7 0 50.85 21.5Q864-677 864-648v432q0 29-21.15 50.5T792-144H168Zm0-72h624v-432H636l-72.1-96H396l-72 96H168v432Zm312-217Z"/></svg><svg class="chip-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機</button>
+  <div class="filter-bar" id="filterBar"></div>
+  <div class="filter-sheet-overlay" id="filterSheetOverlay">
+    <div class="filter-sheet" id="filterSheet" onclick="event.stopPropagation()">
+      <div class="filter-sheet-header">
+        <span class="filter-sheet-title" id="filterSheetTitle"></span>
+        <button class="filter-sheet-close" id="filterSheetClose" aria-label="關閉"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="filter-sheet-body">
+        <div class="filter-sheet-options" id="filterSheetOptions"></div>
+      </div>
+    </div>
   </div>
   <div class="content">
     <!-- Grid View -->
@@ -718,8 +825,19 @@
     // =============================================
 
     let allLocations = [];
+
+    // =============================================
+    // 🔽 篩選設定（機台 / IP / 縣市）
+    // =============================================
+    const FILTER_CONFIG = [
+      { key: 'type',  label: '機台', field: 'type',      fixedOptions: ['抽卡機', '相卡機'] },
+      { key: 'ip',    label: 'IP',      field: 'character' },
+      { key: 'city',  label: '縣市',    field: 'city' },
+    ];
+    const filterState = { type: [], city: [], ip: [] };
+    let filterOptionsData = {};
+    let openPanelKey = null;
     let currentFiltered = [];
-    let currentTypeFilter = 'all';
     let map = null;
     let markers = [];
     let viewInitialized = false; // 避免初始化時觸發 view_toggle
@@ -741,7 +859,7 @@
 
       // GA: view_toggle（跳過頁面初始化那次）
       if (viewInitialized) {
-        gtag('event', 'view_toggle', { view_mode: view });
+        gtag('event', 'view_toggle', { view_mode: view, device: getDeviceType() });
       }
       viewInitialized = true;
 
@@ -836,6 +954,7 @@
         const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
           .addTo(map)
           .bindPopup(`
+            <div data-machine-id="${loc.id}">
             <button class="popup-close-btn" onclick="map.closePopup()">✕</button>
             <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-bottom:12px;">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
             <div class="modal-header">
@@ -852,16 +971,26 @@
               ${loc.note ? `<div class="popup-addr">備註：${loc.note}</div>` : ''}
             </div>
             <div class="popup-actions">
-              <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 前往 Google Maps 查看 →</a>
-              <button class="popup-share-btn" onclick="shareLocation('${loc.id}')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
+              <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link" onclick="trackGmapsClick('${loc.id}','map_popup')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 前往 Google Maps 查看 →</a>
+              <button class="popup-share-btn" onclick="shareLocation('${loc.id}','map_popup')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
             </div>
             ${imgHtml}
+            </div>
           `, {
             maxWidth: 320,
             autoPan: false,
             closeButton: false
           });
         markers.push(marker);
+
+        // GA: map_marker_click（直接點地圖圖示，跟透過清單卡片觸發的 card_click 是不同路徑）
+        marker.on('click', () => {
+          gtag('event', 'map_marker_click', {
+            machine_id: loc.id,
+            machine_type: loc.type,
+            device: getDeviceType(),
+          });
+        });
 
         // 側邊欄卡片（原始版）
         const card = document.createElement('div');
@@ -884,8 +1013,8 @@
             machine_id: loc.id,
             machine_name: loc.name,
             machine_type: loc.type,
+            source: 'map_list',
           });
-          map.flyTo([loc.lat, loc.lng], 15, { duration: 1.2 });
           map.once('moveend', () => marker.openPopup());
         });
         list.appendChild(card);
@@ -973,6 +1102,8 @@
         allLocations = locations;
         currentFiltered = locations;
         renderGrid(locations);
+        buildFilterOptions(locations);
+        renderFilterBar();
 
         // 偵測分享連結 ?id=xxx
         const urlId = new URLSearchParams(window.location.search).get('id');
@@ -981,7 +1112,7 @@
           if (target) {
             const imgs = target.image ? target.image.split(',').map(u => driveUrlToImage(u.trim())).filter(Boolean) : [];
             const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
-            openGridModal(target, imgs, googleMapsUrl);
+            openGridModal(target, imgs, googleMapsUrl, 'share_modal');
           }
         }
 
@@ -1043,6 +1174,7 @@
 
         const card = document.createElement('div');
         card.className = 'loc-card-grid';
+        card.dataset.machineId = loc.id;
         card.innerHTML = `
           <div class="card-top">
             <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
@@ -1055,7 +1187,7 @@
             </div>
           </div>
           <div class="card-actions">
-            <a href="${googleMapsUrl}" target="_blank" class="btn-gmaps"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
+            <a href="${googleMapsUrl}" target="_blank" class="btn-gmaps" onclick="trackGmapsClick('${loc.id}','grid')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
             ${hasDetail ? `<button class="btn-expand" type="button">詳情 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M312-312h132q15.3 0 25.65 10.29Q480-291.42 480-276.21t-10.35 25.71Q459.3-240 444-240H276q-15.3 0-25.65-10.35Q240-260.7 240-276v-168q0-15.3 10.29-25.65Q260.58-480 275.79-480t25.71 10.35Q312-459.3 312-444v132Zm336-336H516q-15.3 0-25.65-10.29Q480-668.58 480-683.79t10.35-25.71Q500.7-720 516-720h168q15.3 0 25.65 10.35Q720-699.3 720-684v168q0 15.3-10.29 25.65Q699.42-480 684.21-480t-25.71-10.35Q648-500.7 648-516v-132Z"/></svg></button>` : ''}
           </div>
         `;
@@ -1069,8 +1201,9 @@
               machine_id: loc.id,
               machine_name: loc.name,
               machine_type: loc.type,
+              source: 'grid',
             });
-            openGridModal(loc, imgs, googleMapsUrl);
+            openGridModal(loc, imgs, googleMapsUrl, 'grid_modal');
           });
         }
 
@@ -1089,7 +1222,10 @@
     function applyFilters() {
       const kw = (document.getElementById('searchInput').value || '').trim().toLowerCase();
       currentFiltered = allLocations.filter(loc => {
-        const matchType = currentTypeFilter === 'all' || loc.type === currentTypeFilter;
+        const matchFilters = FILTER_CONFIG.every(cfg => {
+          const selected = filterState[cfg.key];
+          return selected.length === 0 || selected.includes(loc[cfg.field]);
+        });
         const matchKw = !kw ||
           loc.name.toLowerCase().includes(kw) ||
           loc.addr.toLowerCase().includes(kw) ||
@@ -1097,32 +1233,332 @@
           loc.venue.toLowerCase().includes(kw) ||
           loc.character.toLowerCase().includes(kw) ||
           loc.edition.toLowerCase().includes(kw);
-        return matchType && matchKw;
+        return matchFilters && matchKw;
       });
       renderGrid(currentFiltered);
       syncCount(currentFiltered.length);
       if (map) renderMapLocations(currentFiltered);
+      trackFilterResult(currentFiltered.length);
+    }
+
+    // GA: filter_result（debounce，避免打字搜尋時瘋狂觸發）
+    let filterResultTrackTimer;
+    function trackFilterResult(resultCount) {
+      clearTimeout(filterResultTrackTimer);
+      filterResultTrackTimer = setTimeout(() => {
+        const hasAnyFilter = FILTER_CONFIG.some(cfg => filterState[cfg.key].length > 0);
+        if (!hasAnyFilter) return; // 沒套用任何篩選（純搜尋或初始狀態）就不記錄
+        gtag('event', 'filter_result', {
+          type: filterState.type.join(','),
+          city: filterState.city.join(','),
+          ip: filterState.ip.join(','),
+          result_count: resultCount,
+          device: getDeviceType(),
+        });
+      }, 800);
     }
 
     function handleSearch(kw) {
       applyFilters();
     }
 
-    // Filter chips
-    document.querySelectorAll('.filter-chip').forEach(btn => {
-      btn.addEventListener('click', function() {
-        document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
-        this.classList.add('active');
-        currentTypeFilter = this.getAttribute('data-filter');
+    // =============================================
+    // 🔽 篩選 pill / dropdown / bottom sheet
+    // =============================================
+    // 縣市固定順序（依指定排列）
+    const TW_CITY_ORDER = [
+      '臺北市', '新北市', '基隆市', '桃園市',
+      '新竹市', '臺中市', '嘉義市', '臺南市',
+      '高雄市', '新竹縣', '宜蘭縣', '苗栗縣',
+      '彰化縣', '雲林縣', '南投縣', '嘉義縣',
+      '屏東縣', '花蓮縣', '臺東縣', '澎湖縣',
+      '金門縣', '連江縣',
+    ];
 
-        // GA: filter_click
-        gtag('event', 'filter_click', {
-          filter_type: currentTypeFilter,
-          filter_state: 'on',
-        });
-
-        applyFilters();
+    function buildFilterOptions(locations) {
+      filterOptionsData = {};
+      FILTER_CONFIG.forEach(cfg => {
+        if (cfg.fixedOptions) {
+          filterOptionsData[cfg.key] = cfg.fixedOptions;
+          return;
+        }
+        if (cfg.key === 'city') {
+          // 縣市固定顯示全部 22 個，不受資料是否存在影響；沒資料的選項篩出來會是 0 筆
+          filterOptionsData[cfg.key] = TW_CITY_ORDER.slice();
+          return;
+        }
+        const uniq = [...new Set(locations.map(l => l[cfg.field]).filter(Boolean))];
+        uniq.sort((a, b) => a.localeCompare(b, 'zh-Hant'));
+        filterOptionsData[cfg.key] = uniq;
       });
+    }
+
+    function isMobileFilterLayout() {
+      return window.matchMedia('(max-width: 768px)').matches;
+    }
+
+    // GA 用的裝置判斷：用輸入裝置類型（觸控 vs 滑鼠），不受視窗寬度縮放影響，
+    // 跟上面純粹用來決定排版（dropdown vs bottom sheet）的 isMobileFilterLayout() 分開。
+    function getDeviceType() {
+      return window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
+    }
+
+    function pillLabelText(cfg) {
+      const selected = filterState[cfg.key];
+      if (selected.length === 0) return cfg.label;
+      if (selected.length === 1) return selected[0];
+      return `${cfg.label} (${selected.length})`;
+    }
+
+    function renderFilterBar() {
+      const bar = document.getElementById('filterBar');
+      bar.innerHTML = '';
+      const scroll = document.createElement('div');
+      scroll.className = 'filter-scroll';
+      scroll.id = 'filterScroll';
+      bar.appendChild(scroll);
+
+      FILTER_CONFIG.forEach(cfg => {
+        const group = document.createElement('div');
+        group.className = 'filter-pill-group';
+        group.innerHTML = `
+          <button class="filter-pill" data-key="${cfg.key}" type="button">
+            <span class="pill-label">${pillLabelText(cfg)}</span>
+            <svg class="pill-chevron" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M461-403 318.88-545.19q-2.94-2.95-4.41-6.38Q313-555 313-558.5q0-7 4.95-12.25T331-576h298q8.1 0 13.05 5.4Q647-565.2 647-558q0 1-5.88 12.77L499-403q-4 4-9 6t-10 2q-5 0-10-2t-9-6Z"/></svg>
+          </button>
+          <div class="filter-panel" data-panel="${cfg.key}">
+            <div class="filter-panel-options"></div>
+          </div>`;
+        scroll.appendChild(group);
+        group.querySelector('.filter-panel').addEventListener('click', e => e.stopPropagation());
+        renderOptionsInto(group.querySelector('.filter-panel-options'), cfg);
+        fitPanelWidth(group.querySelector('.filter-panel'));
+      });
+
+      const clearLink = document.createElement('button');
+      clearLink.className = 'filter-clear-link';
+      clearLink.type = 'button';
+      clearLink.textContent = '清除篩選';
+      clearLink.addEventListener('click', clearAllFilters);
+      bar.appendChild(clearLink);
+
+      bar.querySelectorAll('.filter-pill').forEach(btn => {
+        btn.addEventListener('click', function (e) {
+          e.stopPropagation();
+          const key = this.getAttribute('data-key');
+          if (isMobileFilterLayout()) {
+            openMobileFilterSheet(key);
+          } else {
+            toggleDesktopPanel(key);
+          }
+        });
+      });
+
+      refreshPillStates();
+    }
+
+    function renderOptionsInto(container, cfg) {
+      container.innerHTML = '';
+      filterOptionsData[cfg.key].forEach(value => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-option';
+        btn.type = 'button';
+        btn.textContent = value;
+        if (filterState[cfg.key].includes(value)) btn.classList.add('selected');
+        btn.addEventListener('click', () => toggleFilterValue(cfg.key, value));
+        container.appendChild(btn);
+      });
+    }
+
+    function toggleFilterValue(key, value) {
+      const selected = filterState[key];
+      const idx = selected.indexOf(value);
+      const willSelect = idx === -1;
+      if (willSelect) selected.push(value); else selected.splice(idx, 1);
+
+      // GA: filter_click
+      gtag('event', 'filter_click', {
+        filter_type: key,
+        filter_value: value,
+        filter_state: willSelect ? 'on' : 'off',
+        device: getDeviceType(),
+      });
+
+      const cfg = FILTER_CONFIG.find(c => c.key === key);
+
+      // 重新渲染桌面下拉面板的選中狀態
+      const panelOptions = document.querySelector(`.filter-panel[data-panel="${key}"] .filter-panel-options`);
+      if (panelOptions) {
+        renderOptionsInto(panelOptions, cfg);
+        fitPanelWidth(panelOptions.closest('.filter-panel'));
+      }
+
+      // 若手機 bottom sheet 正顯示同一個類別，也一併更新
+      const sheet = document.getElementById('filterSheet');
+      if (sheet.dataset.key === key) {
+        const sheetOptionsEl = document.getElementById('filterSheetOptions');
+        renderOptionsInto(sheetOptionsEl, cfg);
+        if (key === 'type') sheetOptionsEl.style.width = '';
+        else fitOptionsWidth(sheetOptionsEl);
+      }
+
+      refreshPillStates();
+      applyFilters();
+    }
+
+    // flex-wrap 容器的 fit-content 在規格上是「假裝不換行」去量寬度的，
+    // 沒辦法直接撐出「換行後最寬那一列」的寬度，所以改用 JS 量測：
+    // 抓每個 chip 換行後的列（用 offsetTop 分組），取最寬那一列的寬度
+    // 設成容器寬度，讓 margin:0 auto 能真正把整個區塊置中。
+    function fitOptionsWidth(container) {
+      container.style.width = '';
+      const items = Array.from(container.children);
+      if (!items.length) return;
+      const rows = new Map();
+      items.forEach(item => {
+        const top = item.offsetTop;
+        if (!rows.has(top)) rows.set(top, []);
+        rows.get(top).push(item);
+      });
+      let maxRowWidth = 0;
+      rows.forEach(rowItems => {
+        const left = Math.min(...rowItems.map(i => i.offsetLeft));
+        const right = Math.max(...rowItems.map(i => i.offsetLeft + i.offsetWidth));
+        maxRowWidth = Math.max(maxRowWidth, right - left);
+      });
+      if (maxRowWidth > 0) container.style.width = Math.ceil(maxRowWidth) + 'px';
+    }
+
+    // 桌面 dropdown 面板同樣的問題：width:max-content 對會換行的 flex 容器
+    // 是「假裝不換行」去算的，內容一多一定超過 max-width，永遠卡滿 320px，
+    // 就算換行後實際只用到一部分寬度也一樣。改用量測換行後實際列寬來設定面板寬度。
+    function fitPanelWidth(panelEl) {
+      const optionsEl = panelEl.querySelector('.filter-panel-options');
+      if (!optionsEl) return;
+      const prevDisplay = panelEl.style.display;
+      const wasHidden = getComputedStyle(panelEl).display === 'none';
+      if (wasHidden) panelEl.style.display = 'block';
+      panelEl.style.width = '';
+
+      const items = Array.from(optionsEl.children);
+      if (items.length) {
+        const rows = new Map();
+        items.forEach(item => {
+          const top = item.offsetTop;
+          if (!rows.has(top)) rows.set(top, []);
+          rows.get(top).push(item);
+        });
+        let maxRowWidth = 0;
+        rows.forEach(rowItems => {
+          const left = Math.min(...rowItems.map(i => i.offsetLeft));
+          const right = Math.max(...rowItems.map(i => i.offsetLeft + i.offsetWidth));
+          maxRowWidth = Math.max(maxRowWidth, right - left);
+        });
+        const cs = getComputedStyle(panelEl);
+        const paddingX = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+        if (maxRowWidth > 0) panelEl.style.width = Math.ceil(maxRowWidth + paddingX) + 'px';
+      }
+
+      if (wasHidden) panelEl.style.display = prevDisplay;
+    }
+
+    function refreshPillStates() {
+      FILTER_CONFIG.forEach(cfg => {
+        const pill = document.querySelector(`.filter-pill[data-key="${cfg.key}"]`);
+        if (!pill) return;
+        pill.querySelector('.pill-label').textContent = pillLabelText(cfg);
+        pill.classList.toggle('active', filterState[cfg.key].length > 0);
+      });
+    }
+
+    function clearAllFilters() {
+      const hadAnyFilter = FILTER_CONFIG.some(cfg => filterState[cfg.key].length > 0);
+      FILTER_CONFIG.forEach(cfg => { filterState[cfg.key] = []; });
+      document.querySelectorAll('.filter-option.selected').forEach(btn => btn.classList.remove('selected'));
+      closeDesktopPanels(true);
+      closeMobileFilterSheet(true);
+      refreshPillStates();
+      applyFilters();
+
+      // GA: filter_clear
+      if (hadAnyFilter) {
+        gtag('event', 'filter_clear', { device: getDeviceType() });
+      }
+    }
+
+    function toggleDesktopPanel(key) {
+      const alreadyOpen = openPanelKey === key;
+      closeDesktopPanels();
+      if (alreadyOpen) return;
+      const panel = document.querySelector(`.filter-panel[data-panel="${key}"]`);
+      const pill = document.querySelector(`.filter-pill[data-key="${key}"]`);
+      panel.classList.add('open');
+      pill.classList.add('open');
+      openPanelKey = key;
+
+      // GA: filter_panel_open
+      gtag('event', 'filter_panel_open', { filter_type: key, device: 'desktop' });
+    }
+
+    function closeDesktopPanels(skipTracking) {
+      if (openPanelKey && !skipTracking) {
+        // GA: filter_panel_close
+        gtag('event', 'filter_panel_close', {
+          filter_type: openPanelKey,
+          had_selection: filterState[openPanelKey].length > 0,
+          device: 'desktop',
+        });
+      }
+      document.querySelectorAll('.filter-panel.open').forEach(p => p.classList.remove('open'));
+      document.querySelectorAll('.filter-pill.open').forEach(p => p.classList.remove('open'));
+      openPanelKey = null;
+    }
+
+    document.addEventListener('click', function () {
+      closeDesktopPanels();
+    });
+
+    function openMobileFilterSheet(key) {
+      const cfg = FILTER_CONFIG.find(c => c.key === key);
+      document.getElementById('filterSheetTitle').textContent = cfg.key === 'ip' ? 'IP 篩選' : `${cfg.label}篩選`;
+      const sheet = document.getElementById('filterSheet');
+      sheet.dataset.key = key;
+      const sheetOptionsEl = document.getElementById('filterSheetOptions');
+      renderOptionsInto(sheetOptionsEl, cfg);
+      document.getElementById('filterSheetOverlay').classList.add('show');
+      if (key === 'type') sheetOptionsEl.style.width = '';
+      else fitOptionsWidth(sheetOptionsEl);
+      const pill = document.querySelector(`.filter-pill[data-key="${key}"]`);
+      if (pill) pill.classList.add('open');
+
+      // GA: filter_panel_open
+      gtag('event', 'filter_panel_open', { filter_type: key, device: 'mobile' });
+    }
+
+    function closeMobileFilterSheet(skipTracking) {
+      const key = document.getElementById('filterSheet').dataset.key;
+      const wasShown = document.getElementById('filterSheetOverlay').classList.contains('show');
+      if (wasShown && key && !skipTracking) {
+        // GA: filter_panel_close
+        gtag('event', 'filter_panel_close', {
+          filter_type: key,
+          had_selection: (filterState[key] || []).length > 0,
+          device: 'mobile',
+        });
+      }
+      document.getElementById('filterSheetOverlay').classList.remove('show');
+      const pill = document.querySelector(`.filter-pill[data-key="${key}"]`);
+      if (pill) pill.classList.remove('open');
+    }
+
+    document.getElementById('filterSheetClose').addEventListener('click', () => closeMobileFilterSheet());
+    document.getElementById('filterSheetOverlay').addEventListener('click', () => closeMobileFilterSheet());
+    window.addEventListener('resize', () => closeDesktopPanels(true));
+    window.addEventListener('resize', function () {
+      const overlay = document.getElementById('filterSheetOverlay');
+      if (overlay.classList.contains('show') && document.getElementById('filterSheet').dataset.key !== 'type') {
+        fitOptionsWidth(document.getElementById('filterSheetOptions'));
+      }
     });
 
     // GA: 搜尋共用 debounce timer
@@ -1136,7 +1572,7 @@
     }
 
     document.getElementById('searchInput').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus');
+      gtag('event', 'search_box_focus', { source: 'desktop_toolbar' });
     });
     document.getElementById('searchInput').addEventListener('input', function () {
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
@@ -1145,7 +1581,7 @@
     });
 
     document.getElementById('searchInputMobile').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus');
+      gtag('event', 'search_box_focus', { source: 'mobile_toolbar' });
     });
     document.getElementById('searchInputMobile').addEventListener('input', function () {
       document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
@@ -1156,7 +1592,7 @@
     });
 
     document.getElementById('mapSearchInput').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus');
+      gtag('event', 'search_box_focus', { source: 'map' });
     });
     document.getElementById('mapSearchInput').addEventListener('input', function () {
       document.getElementById('clearMapSearch').style.display = this.value ? 'block' : 'none';
@@ -1204,6 +1640,8 @@
       if (gridBtn) {
         e.stopPropagation();
         const action = gridBtn.getAttribute('data-grid-action');
+        // GA: carousel_nav（精簡版，不帶 machine_id，避免同一人滑多張洗版）
+        gtag('event', 'carousel_nav', { direction: action });
         const cid = gridBtn.getAttribute('data-grid-cid');
         const el = document.getElementById(cid);
         if (!el) return;
@@ -1221,7 +1659,8 @@
       // Lightbox（grid）
       const lb = e.target.closest('[data-lightbox]');
       if (lb && !e.target.closest('.leaflet-popup-content')) {
-        openLightbox(lb.getAttribute('data-lightbox') || lb.src);
+        const lbMachineId = lb.closest('[data-machine-id]');
+        openLightbox(lb.getAttribute('data-lightbox') || lb.src, lbMachineId ? lbMachineId.dataset.machineId : null);
         return;
       }
     });
@@ -1232,6 +1671,8 @@
       if (btn) {
         e.stopPropagation(); e.preventDefault();
         const action = btn.getAttribute('data-carousel-action');
+        // GA: carousel_nav（精簡版，不帶 machine_id，避免同一人滑多張洗版）
+        gtag('event', 'carousel_nav', { direction: action });
         const id = btn.getAttribute('data-carousel-id');
         const el = document.getElementById(id);
         if (!el) return;
@@ -1250,12 +1691,13 @@
       if (img && e.target.closest('.leaflet-popup-content')) {
         e.stopPropagation(); e.preventDefault();
         const carouselImg = img.classList.contains('carousel-img') ? img : (img.querySelector('.carousel-img') || img);
-        openLightbox(carouselImg.src);
+        const popupMachineId = img.closest('[data-machine-id]');
+        openLightbox(carouselImg.src, popupMachineId ? popupMachineId.dataset.machineId : null);
         return;
       }
     }, true);
 
-    function openGridModal(loc, imgs, googleMapsUrl) {
+    function openGridModal(loc, imgs, googleMapsUrl, source = 'grid_modal') {
       const mid = 'modal-carousel';
       let imgHtml = '';
       if (imgs.length === 1) {
@@ -1276,6 +1718,7 @@
           </div>`;
       }
 
+      document.getElementById('gridModalContent').dataset.machineId = loc.id;
       document.getElementById('gridModalContent').innerHTML = `
         <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-top:16px;margin-bottom:12px;">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
         <div class="modal-header">
@@ -1292,8 +1735,8 @@
           ${loc.note ? `<div class="popup-addr">${loc.note}</div>` : ''}
         </div>
         <div class="popup-actions">
-          <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
-          <button class="popup-share-btn" onclick="shareLocation('${loc.id}')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
+          <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link" onclick="trackGmapsClick('${loc.id}','${source}')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
+          <button class="popup-share-btn" onclick="shareLocation('${loc.id}','${source}')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
         </div>
         ${imgHtml}
       `;
@@ -1307,10 +1750,18 @@
       document.body.style.overflow = '';
     }
 
-    function shareLocation(id) {
+    function trackGmapsClick(id, source) {
+      gtag('event', 'gmaps_click', {
+        machine_id: id,
+        source: source,
+        device: getDeviceType(),
+      });
+    }
+
+    function shareLocation(id, source) {
       const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
       // GA: share_click
-      gtag('event', 'share_click', { machine_id: id });
+      gtag('event', 'share_click', { machine_id: id, source: source || 'unknown' });
       if (navigator.share) {
         navigator.share({ title: '抽卡機在哪！Card Radar', url });
       } else {
@@ -1366,16 +1817,27 @@
       handle.addEventListener('touchend', function(e) {
         sidebar.style.transition = '';
         const dy = startY - e.changedTouches[0].clientY;
-        if (!isOpen && dy > 50) { isOpen = true; openSheet(); }
-        else if (isOpen && dy < -50) { isOpen = false; peekSheet(); }
+        if (!isOpen && dy > 50) {
+          isOpen = true; openSheet();
+          gtag('event', 'sheet_toggle', { state: 'open' }); // GA：只在真正拖拉造成狀態改變時記錄
+        }
+        else if (isOpen && dy < -50) {
+          isOpen = false; peekSheet();
+          gtag('event', 'sheet_toggle', { state: 'peek' });
+        }
         else { isOpen ? openSheet() : peekSheet(); }
       });
 
     }
 
-    function openLightbox(src) {
+    function openLightbox(src, machineId) {
       document.getElementById('lightboxImg').src = src;
       document.getElementById('lightbox').classList.add('show');
+      // GA: lightbox_open
+      gtag('event', 'lightbox_open', {
+        machine_id: machineId || null,
+        device: getDeviceType(),
+      });
     }
     function closeLightbox() {
       document.getElementById('lightbox').classList.remove('show');

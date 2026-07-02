@@ -155,6 +155,24 @@
     .count-badge { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
     .count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; }
 
+    /* ===== Visitor Banner ===== */
+    .visitor-banner {
+      background: var(--fill-blue-8);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--fill-blue);
+      flex-shrink: 0;
+    }
+    #visitorCount {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      margin: 0 3px;
+    }
+
     /* ===== Filter Chips ===== */
     .filter-bar {
       background: var(--fill-gray5);
@@ -338,7 +356,7 @@
     }
     .leaflet-popup-content { margin: 16px !important; position: relative; max-height: 70vh; overflow-y: auto; }
     .popup-close-btn {
-      position: absolute; top: -4px; right: -4px; z-index: 10;
+      position: absolute; top: 4px; right: 4px; z-index: 10;
       width: 24px; height: 24px;
       background: none; border: none; color: var(--fill-black);
       font-size: 18px; cursor: pointer; line-height: 1;
@@ -389,7 +407,7 @@
 
     /* Popup carousel */
     .carousel { margin-bottom: 4px; }
-    .carousel-img-wrap { display: flex; align-items: center; justify-content: center; }
+    .carousel-img-wrap { display: flex; align-items: center; justify-content: center; width: 100%; }
     .carousel-controls { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 8px; }
     .carousel-btn {
       background: var(--fill-blue); color: var(--fill-white); border: none; border-radius: 50%;
@@ -597,6 +615,10 @@
 </head>
 <body>
 
+  <div class="visitor-banner" id="visitorBanner" style="display:none;">
+    已經有 <span id="visitorCount">⋯</span> 人來找過抽卡機
+  </div>
+
   <header>
     <div class="logo">
       <img class="logo-icon" src="logo.svg" alt="logo" />
@@ -604,6 +626,8 @@
     </div>
     <div class="header-right">
       <div class="header-info" id="lastUpdated"></div>
+      <div class="header-divider"></div>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
       <div class="view-toggle">
         <button class="view-btn" id="btnGrid" onclick="setView('grid')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M324-600q-15.3 0-25.65-10.29Q288-620.58 288-635.79t10.35-25.71Q308.7-672 324-672h456q15.3 0 25.65 10.29Q816-651.42 816-636.21t-10.35 25.71Q795.3-600 780-600H324Zm0 156q-15.3 0-25.65-10.29Q288-464.58 288-479.79t10.35-25.71Q308.7-516 324-516h456q15.3 0 25.65 10.29Q816-495.42 816-480.21t-10.35 25.71Q795.3-444 780-444H324Zm0 156q-15.3 0-25.65-10.29Q288-308.58 288-323.79t10.35-25.71Q308.7-360 324-360h456q15.3 0 25.65 10.29Q816-339.42 816-324.21t-10.35 25.71Q795.3-288 780-288H324ZM180-600q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-636q0 14-10.35 25T180-600Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-480q0 14-10.35 25T180-444Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-324q0 14-10.35 25T180-288Z"/></svg> <span class="label">列表</span></button>
         <button class="view-btn" id="btnMap" onclick="setView('map')">
@@ -612,8 +636,6 @@
         <span class="label">地圖</span>
       </button>
       </div>
-      <div class="header-divider"></div>
-      <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
     </div>
   </header>
 
@@ -691,11 +713,16 @@
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQgBZrLfJlb-JY9YGm3o9vX5w3jG9hojq5E79tStxW1g89rKpuMnaRi1vA833KmZbilAAv9vrhttqQh/pub?gid=0&single=true&output=csv';
 
+    // =============================================
+    // 🗂️ SVG Icons
+    // =============================================
+
     let allLocations = [];
     let currentFiltered = [];
     let currentTypeFilter = 'all';
     let map = null;
     let markers = [];
+    let viewInitialized = false; // 避免初始化時觸發 view_toggle
 
     const customIcon = L.divIcon({
       html: '🎰', className: '',
@@ -711,6 +738,12 @@
       document.getElementById('gridView').classList.toggle('active', view === 'grid');
       document.getElementById('mapView').classList.toggle('active', view === 'map');
       document.body.classList.toggle('map-view', view === 'map');
+
+      // GA: view_toggle（跳過頁面初始化那次）
+      if (viewInitialized) {
+        gtag('event', 'view_toggle', { view_mode: view });
+      }
+      viewInitialized = true;
 
       if (view === 'map') {
         initMap();
@@ -810,13 +843,13 @@
             </div>
             ${loc.limited ? `<div class="popup-limited">期間限定：${loc.limited}</div>` : ''}
             <div class="modal-info-section">
-              ${loc.venue ? `<div class="popup-addr">🏢 ${loc.venue}</div>` : ''}
-              <div class="popup-addr">📍 ${loc.addr}</div>
-              ${loc.character ? `<div class="popup-addr">⭐ IP：${loc.character}</div>` : ''}
-              ${loc.edition ? `<div class="popup-addr">🃏 彈數：${loc.edition}</div>` : ''}
-              ${loc.perDraw ? `<div class="popup-addr">🎴 一抽張數：${loc.perDraw}</div>` : ''}
-              ${loc.hours ? `<div class="popup-addr">🕐 ${loc.hours}</div>` : ''}
-              ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
+              ${loc.venue ? `<div class="popup-addr">地點：${loc.venue}</div>` : ''}
+              <div class="popup-addr">地址：${loc.addr}</div>
+              ${loc.character ? `<div class="popup-addr">IP：${loc.character}</div>` : ''}
+              ${loc.edition ? `<div class="popup-addr">彈數：${loc.edition}</div>` : ''}
+              ${loc.perDraw ? `<div class="popup-addr">一抽張數：${loc.perDraw}</div>` : ''}
+              ${loc.hours ? `<div class="popup-addr">營業時間：${loc.hours}</div>` : ''}
+              ${loc.note ? `<div class="popup-addr">備註：${loc.note}</div>` : ''}
             </div>
             <div class="popup-actions">
               <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 前往 Google Maps 查看 →</a>
@@ -846,6 +879,12 @@
         card.addEventListener('click', () => {
           document.querySelectorAll('.loc-card').forEach(c => c.classList.remove('active'));
           card.classList.add('active');
+          // GA: card_click
+          gtag('event', 'card_click', {
+            machine_id: loc.id,
+            machine_name: loc.name,
+            machine_type: loc.type,
+          });
           map.flyTo([loc.lat, loc.lng], 15, { duration: 1.2 });
           map.once('moveend', () => marker.openPopup());
         });
@@ -859,7 +898,7 @@
     function driveUrlToImage(url) {
       if (!url) return '';
       const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-      if (match) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      if (match) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
       if (url.includes('res.cloudinary.com')) {
         return url.replace('/upload/', '/upload/w_800,q_auto,f_auto/');
       }
@@ -993,13 +1032,13 @@
 
         const hasDetail = loc.addr || loc.edition || loc.perDraw || loc.hours || loc.note || imgs.length > 0;
         let detailHtml = '';
-        if (loc.addr) detailHtml += `<div class="detail-row"><span class="detail-icon">📍</span><span class="detail-text">${loc.city}${loc.addr}</span></div>`;
-        if (loc.hours) detailHtml += `<div class="detail-row"><span class="detail-icon">🕐</span><span class="detail-text">${loc.hours}</span></div>`;
+        if (loc.addr) detailHtml += `<div class="detail-row"><span class="detail-text">${loc.city}${loc.addr}</span></div>`;
+        if (loc.hours) detailHtml += `<div class="detail-row"><span class="detail-text">${loc.hours}</span></div>`;
         if (loc.edition || loc.perDraw) {
           const t = [loc.edition ? `彈數：${loc.edition}` : '', loc.perDraw ? `一抽：${loc.perDraw}張` : ''].filter(Boolean).join('　');
-          detailHtml += `<div class="detail-row"><span class="detail-icon">🃏</span><span class="detail-text">${t}</span></div>`;
+          detailHtml += `<div class="detail-row"><span class="detail-text">${t}</span></div>`;
         }
-        if (loc.note) detailHtml += `<div class="detail-row"><span class="detail-icon">📝</span><span class="detail-text">${loc.note}</span></div>`;
+        if (loc.note) detailHtml += `<div class="detail-row"><span class="detail-text">${loc.note}</span></div>`;
         if (imageHtml) detailHtml += imageHtml;
 
         const card = document.createElement('div');
@@ -1025,6 +1064,12 @@
           const btn = card.querySelector('.btn-expand');
           btn.addEventListener('click', function(e) {
             e.stopPropagation();
+            // GA: card_click
+            gtag('event', 'card_click', {
+              machine_id: loc.id,
+              machine_name: loc.name,
+              machine_type: loc.type,
+            });
             openGridModal(loc, imgs, googleMapsUrl);
           });
         }
@@ -1069,19 +1114,49 @@
         document.querySelectorAll('.filter-chip').forEach(b => b.classList.remove('active'));
         this.classList.add('active');
         currentTypeFilter = this.getAttribute('data-filter');
+
+        // GA: filter_click
+        gtag('event', 'filter_click', {
+          filter_type: currentTypeFilter,
+          filter_state: 'on',
+        });
+
         applyFilters();
       });
     });
 
+    // GA: 搜尋共用 debounce timer
+    let searchTrackTimer;
+    function trackSearch(kw) {
+      clearTimeout(searchTrackTimer);
+      if (kw.length < 2) return;
+      searchTrackTimer = setTimeout(() => {
+        gtag('event', 'search', { search_term: kw });
+      }, 800);
+    }
+
+    document.getElementById('searchInput').addEventListener('focus', function() {
+      gtag('event', 'search_box_focus');
+    });
     document.getElementById('searchInput').addEventListener('input', function () {
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
+      trackSearch(this.value.trim().toLowerCase());
       applyFilters();
+    });
+
+    document.getElementById('searchInputMobile').addEventListener('focus', function() {
+      gtag('event', 'search_box_focus');
     });
     document.getElementById('searchInputMobile').addEventListener('input', function () {
       document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
       document.getElementById('searchInput').value = this.value;
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
+      trackSearch(this.value.trim().toLowerCase());
       applyFilters();
+    });
+
+    document.getElementById('mapSearchInput').addEventListener('focus', function() {
+      gtag('event', 'search_box_focus');
     });
     document.getElementById('mapSearchInput').addEventListener('input', function () {
       document.getElementById('clearMapSearch').style.display = this.value ? 'block' : 'none';
@@ -1089,6 +1164,7 @@
       document.getElementById('searchInputMobile').value = this.value;
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
       document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
+      trackSearch(this.value.trim().toLowerCase());
       applyFilters();
     });
     document.getElementById('clearSearch').addEventListener('click', function () {
@@ -1207,13 +1283,13 @@
         </div>
         ${loc.limited ? `<div class="popup-limited">期間限定：${loc.limited}</div>` : ''}
         <div class="modal-info-section">
-          ${loc.venue ? `<div class="popup-addr">🏢 場地：${loc.venue}</div>` : ''}
-          ${loc.addr ? `<div class="popup-addr">📍 地址：${loc.addr}</div>` : ''}
-          ${loc.hours ? `<div class="popup-addr">🕐 營業時間：${loc.hours}</div>` : ''}
-          ${loc.character ? `<div class="popup-addr">🌟 IP：${loc.character}</div>` : ''}
-          ${loc.edition ? `<div class="popup-addr">🃏 彈數：${loc.edition}</div>` : ''}
-          ${loc.perDraw ? `<div class="popup-addr">💸 價格與張數：${loc.perDraw}</div>` : ''}
-          ${loc.note ? `<div class="popup-addr">📝 ${loc.note}</div>` : ''}
+          ${loc.venue ? `<div class="popup-addr">場地：${loc.venue}</div>` : ''}
+          ${loc.addr ? `<div class="popup-addr">地址：${loc.addr}</div>` : ''}
+          ${loc.hours ? `<div class="popup-addr">營業時間：${loc.hours}</div>` : ''}
+          ${loc.character ? `<div class="popup-addr">IP：${loc.character}</div>` : ''}
+          ${loc.edition ? `<div class="popup-addr">彈數：${loc.edition}</div>` : ''}
+          ${loc.perDraw ? `<div class="popup-addr">價格與張數：${loc.perDraw}</div>` : ''}
+          ${loc.note ? `<div class="popup-addr">${loc.note}</div>` : ''}
         </div>
         <div class="popup-actions">
           <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
@@ -1233,6 +1309,8 @@
 
     function shareLocation(id) {
       const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+      // GA: share_click
+      gtag('event', 'share_click', { machine_id: id });
       if (navigator.share) {
         navigator.share({ title: '抽卡機在哪！Card Radar', url });
       } else {
@@ -1303,6 +1381,28 @@
       document.getElementById('lightbox').classList.remove('show');
     }
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+    // GA: report_click（所有回報表單連結）
+    document.querySelectorAll('.report-link').forEach(link => {
+      link.addEventListener('click', () => {
+        gtag('event', 'report_click');
+      });
+    });
+
+    // =============================================
+    // 👣 訪客計數
+    // =============================================
+    async function loadVisitorCount() {
+      try {
+        const res = await fetch('https://api.counterapi.dev/v1/cardradartw/visits/up');
+        const data = await res.json();
+        document.getElementById('visitorCount').textContent = data.count.toLocaleString('zh-TW');
+        document.getElementById('visitorBanner').style.display = 'flex';
+      } catch (e) {
+        // API 失敗時靜默隱藏 banner
+      }
+    }
+    loadVisitorCount();
 
     // 初始化
     setView('grid');
