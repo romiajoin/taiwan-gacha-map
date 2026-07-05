@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
-  <meta name="description" content="想知道臺灣哪裡有抽卡機和相卡機？來抽卡機在哪 Card Radar 搜搜吧！快速找到附近的抽卡機位置與最新機台資訊">
+  <meta name="description" content="想找抽卡機 / 相卡機？來「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NGGBNKBJB9"></script>
@@ -240,9 +240,15 @@
     }
     .filter-panel.open { display: block; }
     .filter-panel-options { display: flex; flex-wrap: wrap; gap: 12px; }
+    .filter-panel-hint {
+      font-size: 12px;
+      color: var(--fill-gray-64);
+      margin-bottom: 16px;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
     .filter-option {
       padding: 8px 16px;
-      border-radius: 16.5px;
+      border-radius: 9999px;
       border: none;
       background: var(--fill-blue-8);
       color: var(--fill-blue);
@@ -449,8 +455,6 @@
 
     /* Map */
     #map { flex: 1; }
-    .mobile-map-search { display: none; }
-    .map-search-row { display: none; }
 
     /* ===== 自訂地圖 Marker（取代原本的 🎰 emoji icon）===== */
     .card-marker { background: none; border: none; }
@@ -723,34 +727,7 @@
         border-radius: 2px;
       }
       .sidebar-header { padding: 10px 16px 6px; }
-      .map-search-row {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 20px 12px;
-        background: var(--fill-gray6);
-        flex-shrink: 0;
-      }
-      .mobile-map-search {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        background: var(--fill-white);
-        border-radius: 999px;
-        padding: 12px 16px;
-        gap: 8px;
-      }
-      .mobile-map-search input {
-        background: none; border: none; outline: none;
-        color: var(--fill-gray-64); font-family: 'Noto Sans TC', sans-serif;
-        font-size: 16px; width: 100%;
-        transform: scale(0.875); transform-origin: left center;
-      }
-      .mobile-map-search input::placeholder { color: var(--gray-64); }
       .location-list { padding: 0px 20px 00px 20px; }
-      .mobile-count-badge { font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
-      .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; }
-      .mobile-count-badge span { color: var(--fill-black); font-size: 14px; }
       .last-updated-list-row {
         display: flex; align-items: center; justify-content: center;
         gap: 8px; padding-bottom: 12px;
@@ -812,6 +789,7 @@
         <button class="filter-sheet-close" id="filterSheetClose" aria-label="關閉"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
       </div>
       <div class="filter-sheet-body">
+        <div class="filter-panel-hint" id="filterSheetHint" style="display:none;"></div>
         <div class="filter-sheet-options" id="filterSheetOptions"></div>
       </div>
     </div>
@@ -1545,6 +1523,7 @@
             <svg class="pill-chevron" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M461-403 318.88-545.19q-2.94-2.95-4.41-6.38Q313-555 313-558.5q0-7 4.95-12.25T331-576h298q8.1 0 13.05 5.4Q647-565.2 647-558q0 1-5.88 12.77L499-403q-4 4-9 6t-10 2q-5 0-10-2t-9-6Z"/></svg>
           </button>
           <div class="filter-panel" data-panel="${cfg.key}">
+            ${cfg.key === 'ip' ? `<div class="filter-panel-hint">依「數字 → 筆畫 → 英文」排序</div>` : ''}
             <div class="filter-panel-options"></div>
           </div>`;
         scroll.appendChild(group);
@@ -1741,6 +1720,13 @@
       document.getElementById('filterSheetTitle').textContent = cfg.key === 'ip' ? 'IP 篩選' : `${cfg.label}篩選`;
       const sheet = document.getElementById('filterSheet');
       sheet.dataset.key = key;
+      const hintEl = document.getElementById('filterSheetHint');
+      if (cfg.key === 'ip') {
+        hintEl.textContent = '依「數字 → 筆畫 → 英文」排序，可滑動尋找';
+        hintEl.style.display = 'block';
+      } else {
+        hintEl.style.display = 'none';
+      }
       const sheetOptionsEl = document.getElementById('filterSheetOptions');
       renderOptionsInto(sheetOptionsEl, cfg);
       document.getElementById('filterSheetOverlay').classList.add('show');
@@ -1952,7 +1938,10 @@
     }
 
     function shareLocation(id, source) {
-      const url = `${window.location.origin}${window.location.pathname}?id=${id}`;
+      // 分享出去的連結走 /api/share?id=xxx，讓 LINE/Threads 等平台的爬蟲能讀到
+      // 這個機台對應的 og:title/og:description（見 api/share.js）；
+      // 真人點進來後，那支 function 會立刻導回這裡（/?id=xxx），使用體驗不變。
+      const url = `${window.location.origin}/api/share?id=${id}`;
       // GA: share_click
       gtag('event', 'share_click', { machine_id: id, source: source || 'unknown' });
       if (navigator.share) {
