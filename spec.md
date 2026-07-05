@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/06/19（v17）
+**最後更新：** 2026/07/03（v19）
 
 ---
 
@@ -22,6 +22,8 @@
 | 圖片託管 | Cloudinary |
 | 網站託管 | Vercel（免費） |
 | 字體 | Chiron GoRound TC（400/500/700）、Space Mono（統計數字）|
+| 訪客計數 | counterapi.dev |
+| 數據分析 | Google Analytics 4（GA4） |
 
 **不需要後端、不需要資料庫、不需要 API 金鑰。**
 
@@ -54,14 +56,43 @@
 
 ## 功能規格
 
+### 訪客計數 Banner
+- 位置：header 正上方，全寬橫幅
+- 文字：「已經有 N 人來找過抽卡機」，置中顯示
+- 數字樣式：Space Mono Bold
+- 顏色：`--fill-blue`（文字與數字）、`--fill-blue-8`（背景）
+- 資料來源：counterapi.dev（`cardradartw/visits`），page view 計數（每次載入 +1）
+- API 失敗時靜默隱藏，不影響其他功能
+
 ### Header
-- 右側：最後更新時間 + View Toggle + divider + 「回報表單」text link
+- 右側由左至右：最後更新時間 ｜ 回報表單 　[列表][地圖]
 - 回報表單：灰色文字（`--fill-gray`），hover 變藍，`target="_blank"` 開新分頁
 - View Toggle：768px 以下隱藏文字標籤，只顯示 icon；padding 調整為 `8px 10px`
 
+### GA4 自訂事件追蹤
+| 事件名稱 | 觸發時機 | 參數 |
+|---|---|---|
+| `search_box_focus` | 點擊搜尋框 | `source` |
+| `search` | 輸入關鍵字（debounce 800ms） | `search_term` |
+| `filter_click` | 點擊篩選面板/sheet 裡的選項 | `filter_type`, `filter_value`, `filter_state`, `device` |
+| `filter_panel_open` / `filter_panel_close` | 打開/主動關閉篩選面板或 sheet | `filter_type`, `had_selection`（close 才有）, `device` |
+| `filter_clear` | 清除篩選 | `device` |
+| `filter_result` | 篩選結果更新（debounce 800ms） | `type`, `city`, `ip`, `result_count`, `device` |
+| `view_toggle` | 切換列表 / 地圖 | `view_mode`, `device` |
+| `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source` |
+| `map_marker_click` | 直接點地圖圖示 | `machine_id`, `machine_type`, `device` |
+| `gmaps_click` | 點擊 Google Maps 連結 | `machine_id`, `source`, `device` |
+| `share_click` | 點擊分享按鈕 | `machine_id`, `source` |
+| `lightbox_open` | 點圖放大 | `machine_id`, `device` |
+| `carousel_nav` | 輪播圖切換 | `direction` |
+| `sheet_toggle` | 手機地圖模式拖拉 bottom sheet | `state` |
+| `report_click` | 點擊回報表單連結 | — |
+
+詳細觸發規則與防誤觸機制見 `CLAUDE.md`。
+
 ### 分享單一地點
 - URL 格式：`cardradartw.vercel.app/?id=<id>`
-- 地圖 popup 與 grid modal 各有一個分享按鈕（share SVG icon 在右，樣式同詳情按鈕）
+- 地圖 popup 與 grid modal 各有一個分享按鈕
 - 手機：`navigator.share()` 跳出原生分享選單
 - 桌機：`clipboard.writeText()` + toast 提示「已複製連結！」
 - 開啟分享連結時：資料載入後偵測 `?id=` 參數，自動開對應地點的 grid modal
@@ -76,8 +107,8 @@
 兩者樣式一致，顯示以下資訊（有資料才顯示）：
 1. 店名（白色粗體標題，右上角固定 ✕ 關閉按鈕）
 2. 期間限定（黃色邊框圓角框）
-3. 資訊欄：🏢 場地、📍 地址、⭐ IP、🃏 彈數、🎴 一抽張數、🕐 營業時間、📝 備註
-4. 🗺️ 前往 Google Maps 查看 →（黃色連結、底線）
+3. 資訊欄（純文字標籤，無 icon）：場地、地址、IP、彈數、一抽張數、營業時間、備註
+4. 前往 Google Maps 查看 →（藍色連結）
 5. 圖片（width: 100%，height: auto，依原始比例顯示；多張支援輪播）
 
 ### 列表模式（Grid View）
@@ -95,10 +126,13 @@
 - 點卡片 → 地圖飛到該地點並打開彈窗
 
 ### 篩選
-- Toolbar 下方獨立一排 Filter Chips：`[全部] [playing_cards 抽卡機] [photo_camera 相卡機]`
-- Icon 使用 Material Symbols inline SVG；normal 狀態用 FILL0（outline），active 狀態切換為 FILL1（fill）
+- 三個篩選維度，各自一個 dropdown pill：機台類型、縣市、IP，均為多選
+- **桌面版**：點 pill 在下方展開錨定 popover 面板，選項為 chip，點擊即時套用（無需確認按鈕）；已選 1 項時 pill 直接顯示該值全名，選 2 項以上顯示「類別 (n)」
+- **手機版**：改用 bottom sheet（標題「{類別}篩選」+ 右上角關閉鈕），header 固定不隨選項列表捲動；選項區塊整包置中、內部每列靠左對齊
+- 縣市選項固定顯示全部 22 個（`TW_CITY_ORDER` 自訂順序），不受目前資料是否涵蓋該縣市影響；IP、機台類型選項則是動態去重
+- 清除篩選：桌面版位於最後一個 pill 右側（24px 間距）；手機版固定在 pill 列右側，不隨 pill 橫向捲動
 - 篩選與搜尋同時作用（交集）
-- 類型 Badge 顯示於：列表卡片左上角、詳情 Modal、地圖 Popup
+- 類型 Badge 顯示於：列表卡片左上角、詳情 Modal、地圖 Popup（樣式與篩選 UI 無關，維持原本設計）
   - 抽卡機：背景 `#00c2a8`，黑字，`border-radius: 4px`，icon：Material Symbols playing_cards（FILL1）
   - 相卡機：背景 `#ffcf48`，黑字，`border-radius: 4px`，icon：Material Symbols photo_camera（FILL1）
 
@@ -129,7 +163,8 @@
 | 手機（≤640px） | Header + 主內容區（地圖全螢幕 + 底部 bottom sheet） |
 
 ### 手機版地圖模式
-- Filter bar（全部 / 抽卡機 / 相卡機）顯示於地圖上方（toolbar 隱藏，filter-bar 保留）
+- Filter bar（機台類型 / 縣市 / IP dropdown pill）顯示於地圖上方（toolbar 隱藏，filter-bar 保留），pill 列可橫向捲動，清除篩選固定不隨捲動
+- 篩選面板改為 bottom sheet 呈現，z-index 高於下方的 sidebar bottom sheet，避免被蓋住
 - 地圖：`flex: 1` 佔滿整個內容區高度
 - Sidebar（bottom sheet）：`position: fixed; bottom: 0`，疊在地圖上方
   - **Peek state**（預設）：`height: 154px`，顯示 handle bar + search row + 第一張卡片微露
@@ -184,7 +219,7 @@
 ### 新增圖片流程
 1. 上傳圖片到 Cloudinary
 2. 複製圖片網址
-3. 貼到 Google Sheet I 欄（多張用逗號分隔）
+3. 貼到 Google Sheet K 欄（多張用逗號分隔）
 
 ---
 

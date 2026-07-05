@@ -301,6 +301,7 @@
     .type-badge {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 4px;
       align-self: flex-start;
       font-size: 12px; font-weight: 500;
@@ -399,7 +400,6 @@
 
     /* ===== Last Updated ===== */
     .last-updated-list-row { display: none; }
-    .last-updated-map-row  { display: none; }
 
     /* ===== Map View ===== */
     #mapView { width: 100%; height: 100%; display: none; }
@@ -407,10 +407,17 @@
 
     /* ===== Sidebar ===== */
     .sidebar {
-      width: 360px;
+      width: 400px;
       background: var(--off-white);
       border-right: 1px solid var(--gray-16);
       display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+    }
+    .sidebar-placeholder {
+      color: var(--fill-black);
+      font-size: 14px;
+      line-height: 1.6;
+      padding-top: 4px;
+      text-align: center;
     }
     .sidebar-header {
       padding: 20px;
@@ -421,7 +428,7 @@
       text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
     }
     .map-scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-    .location-list { padding: 20px 20px; }
+    .location-list { padding: 20px 20px; position: relative; }
     .map-scroll-wrapper::-webkit-scrollbar { width: 0px; }
     .map-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
     .map-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
@@ -433,7 +440,7 @@
       cursor: pointer; border: 1px solid transparent;
       transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
     }
-    .loc-card:hover { border-color: var(--fill-blue); transform: translateX(3px); box-shadow: 0 8px 24px rgba(0,102,255,0.24); }
+    .loc-card:hover { border-color: var(--fill-blue); box-shadow: 0 8px 24px rgba(0,102,255,0.24); }
     .loc-card.active { border-color: var(--fill-blue); }
     .loc-name { font-weight: 700; font-size: 16px; color: var(--fill-black); margin-top: 12px; margin-bottom: 14px; }
     .loc-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; margin-bottom: 12px; }
@@ -444,6 +451,65 @@
     #map { flex: 1; }
     .mobile-map-search { display: none; }
     .map-search-row { display: none; }
+
+    /* ===== 自訂地圖 Marker（取代原本的 🎰 emoji icon）===== */
+    .card-marker { background: none; border: none; }
+    .marker-pin {
+      position: relative;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--marker-color, var(--fill-orange));
+      border: 2.5px solid var(--fill-white);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+      transition: width 0.15s, height 0.15s, box-shadow 0.15s;
+    }
+    .marker-pin svg { width: 16px; height: 16px; fill: var(--fill-white); flex-shrink: 0; }
+    .marker-pin .marker-num {
+      color: var(--fill-white); font-family: 'Space Mono', monospace;
+      font-weight: 700; font-size: 13px; line-height: 1;
+    }
+    .marker-count {
+      position: absolute; top: -4px; right: -4px;
+      min-width: 18px; height: 18px; padding: 0 4px;
+      border-radius: 999px;
+      background: var(--fill-white); color: var(--marker-color, var(--fill-orange));
+      border: 1.5px solid var(--marker-color, var(--fill-orange));
+      font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+    }
+    .card-marker.selected .marker-pin { width: 40px; height: 40px; box-shadow: 0 4px 14px rgba(0,0,0,0.45); }
+    .card-marker.selected .marker-pin svg { width: 20px; height: 20px; }
+
+    /* 同座標多機的 cluster popup 清單 */
+    .cluster-popup-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .cluster-popup-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%;
+      padding: 12px 12px;
+      background: var(--fill-white);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer; text-align: left;
+      font-family: 'Noto Sans TC', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .cluster-popup-item:hover { border-color: var(--fill-blue); background: var(--fill-blue-8); }
+    .cluster-popup-item.selected { border-color: var(--fill-blue); background: var(--fill-blue-8); }
+    .cluster-popup-item .type-badge { flex-shrink: 0; padding: 4px; align-self: center; }
+    .cluster-popup-item .type-badge svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+    .cluster-popup-item-text {
+      display: flex; flex-direction: column; gap: 4px;
+      flex: 1;
+    }
+    .cluster-popup-item-name {
+      font-size: 14px; font-weight: 500; color: var(--fill-black);
+      white-space: nowrap;
+    }
+    .cluster-popup-item-sub {
+      font-size: 12px; font-weight: 400; color: var(--fill-gray-64);
+      white-space: nowrap;
+    }
 
     /* ===== Leaflet popup ===== */
     .leaflet-popup-content-wrapper {
@@ -582,14 +648,7 @@
         font-size: 12px; font-weight: 400; color: var(--fill-black);
       }
       body.map-view .last-updated-list-row { display: none; }
-      .last-updated-map-row {
-        display: flex; flex-shrink: 0; align-items: center; justify-content: center;
-        gap: 8px; padding: 12px 20px 0;
-        font-family: 'Space Mono', monospace;
-        font-size: 12px; font-weight: 400; color: var(--fill-black);
-      }
-      .last-updated-list-row .report-link,
-      .last-updated-map-row .report-link { font-size: 12px; }
+      .last-updated-list-row .report-link { font-size: 12px; }
     }
 
     /* ===== Mobile ===== */
@@ -610,8 +669,7 @@
       .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
       .search-box-mobile input { font-size: 16px; }
 
-      /* 地圖模式：顯示 filter chips，隱藏搜尋框與地點數 */
-      body.map-view .toolbar { display: none; }
+      /* 地圖模式：搜尋框跟地點數維持跟列表模式一樣，共用同一個 .toolbar，不再另外藏起來 */
 
       /* 地圖模式：bottom sheet */
       #mapView {
@@ -629,13 +687,13 @@
         left: 0;
         right: 0;
         width: 100%;
-        height: 160px;
+        height: 98px;
         border-right: none;
         border-top: none;
         border-radius: 16px 16px 0 0;
         box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.10);
         transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 1000;
+        z-index: 2000;
         display: flex;
         flex-direction: column;
         overflow: hidden;
@@ -645,19 +703,19 @@
       body:not(.map-view) .sidebar {
         display: none;
       }
-      .sidebar.sheet-open {
-        height: 50vh;
-      }
+      /* sheet 高度改由 JS 依「篩選列下緣」動態計算並直接寫 inline style，不再用固定 vh class */
       .sheet-handle {
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 8px 0px 0px 0px;
+        padding: 12px 0px 12px 0px;
         background: var(--fill-gray-6);
         cursor: grab;
         flex-shrink: 0;
         touch-action: none;
       }
+      /* 預設狀態（沒點任何 marker）的提示文字，上下留 20px，比收合摘要卡矮 */
+      .sidebar-placeholder { padding: 20px 0; }
       .sheet-handle-bar {
         width: 36px;
         height: 4px;
@@ -689,7 +747,7 @@
         transform: scale(0.875); transform-origin: left center;
       }
       .mobile-map-search input::placeholder { color: var(--gray-64); }
-      .location-list { padding: 12px 20px 20px 20px; }
+      .location-list { padding: 0px 20px 00px 20px; }
       .mobile-count-badge { font-family: 'Noto Sans TC', sans-serif; white-space: nowrap; }
       .mobile-count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; }
       .mobile-count-badge span { color: var(--fill-black); font-size: 14px; }
@@ -700,14 +758,7 @@
         font-size: 12px; font-weight: 400; color: var(--fill-black);
       }
       body.map-view .last-updated-list-row { display: none; }
-      .last-updated-map-row {
-        display: flex; flex-shrink: 0; align-items: center; justify-content: center;
-        gap: 8px; padding: 12px 20px 0;
-        font-family: 'Space Mono', monospace;
-        font-size: 12px; font-weight: 400; color: var(--fill-black);
-      }
-      .last-updated-list-row .report-link,
-      .last-updated-map-row .report-link { font-size: 12px; }
+      .last-updated-list-row .report-link { font-size: 12px; }
       .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }
     }
 
@@ -784,20 +835,7 @@
         <div class="sheet-handle">
           <div class="sheet-handle-bar"></div>
         </div>
-        <div class="map-search-row">
-          <div class="mobile-map-search">
-            <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
-            <input type="text" id="mapSearchInput" placeholder="搜尋 IP、縣市、場地..." />
-            <button class="search-clear-btn" id="clearMapSearch"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
-          </div>
-          <div class="mobile-count-badge"><strong id="mobileCountBadge">0</strong><span> 個地點</span></div>
-        </div>
         <div class="map-scroll-wrapper">
-          <div class="last-updated-map-row">
-            <div class="last-updated-map" id="mapLastUpdated"></div>
-            <div class="header-divider"></div>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
-          </div>
           <div class="location-list" id="locationList"></div>
         </div>
       </aside>
@@ -840,12 +878,33 @@
     let currentFiltered = [];
     let map = null;
     let markers = [];
+    let markerByLocId = {}; // loc.id -> 該機台所屬的 marker（同座標多機共用一個 marker，供列表點擊時對照用）
     let viewInitialized = false; // 避免初始化時觸發 view_toggle
 
-    const customIcon = L.divIcon({
-      html: '🎰', className: '',
-      iconSize: [52, 52], iconAnchor: [26, 26], popupAnchor: [0, -26]
-    });
+    // 地圖 marker 用的圖示（與既有 type-badge 同一套 path，白色描邊圓形，跟 OSM 底圖圖示做出區隔）
+    const MARKER_ICON_SVG = {
+      '相卡機': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg>',
+      '抽卡機': '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg>',
+    };
+    const MARKER_COLOR = { '抽卡機': 'var(--fill-orange)', '相卡機': 'var(--fill-green)' };
+
+    // 依同座標分組後的 locs 陣列，決定 marker 顏色／圖示／是否顯示數量角標
+    function createClusterIcon(locs) {
+      const types = [...new Set(locs.map(l => l.type))];
+      const isSingleType = types.length === 1;
+      const color = isSingleType ? (MARKER_COLOR[types[0]] || 'var(--fill-blue)') : 'var(--fill-blue)';
+      const iconInner = isSingleType
+        ? (MARKER_ICON_SVG[types[0]] || '')
+        : `<span class="marker-num">${locs.length}</span>`;
+      const countBadge = locs.length > 1 ? `<div class="marker-count">${locs.length}</div>` : '';
+      return L.divIcon({
+        html: `<div class="marker-pin" style="--marker-color:${color}">${iconInner}${countBadge}</div>`,
+        className: 'card-marker',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -18],
+      });
+    }
 
     // =============================================
     // <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 切換視圖
@@ -865,7 +924,7 @@
 
       if (view === 'map') {
         initMap();
-        peekSheet();
+        closeDetailPanel();
         initBottomSheet();
         setTimeout(() => { if (map) map.invalidateSize(); }, 50);
       }
@@ -904,121 +963,282 @@
         });
       });
 
+      // 桌面版：點地圖空白處收回側邊欄（marker 本身的 click 預設不會冒泡到這裡）
+      map.on('click', () => {
+        if (!isMobileMapLayout()) closeDetailPanel();
+      });
+
       renderMapLocations(currentFiltered.length ? currentFiltered : allLocations);
     }
 
     // =============================================
-    // 📍 渲染地圖 markers + 側邊欄（原始版邏輯）
+    // 📍 渲染地圖 markers
+    // 同座標的多台機器共用一個 marker（避免完全重疊互相遮蓋），
+    // marker 依機台類型上色／加數量角標。
+    //
+    // 互動模式（對齊 Figma 新版 mobile/desktop 地圖流程）：
+    // - Cluster marker（同座標多台機器）：不分裝置，一律用浮動 Leaflet popup 顯示清單。
+    // - Mobile（≤640px）：預設 sheet 收在小 peek（放提示文字，跟桌面版同一句文案）；
+    //   點單一 marker，或 cluster popup 清單裡的項目，開「摘要卡」中間態；可拖 handle 展開「完整詳情」；
+    //   往下滑最低只會停在「摘要卡」，不會自動變不見；只有點 X 才會整個收回 peek。
+    // - Desktop：側邊欄固定寬 400 常駐（預設顯示提示文字）；點單一 marker，或 cluster popup 清單裡的項目，
+    //   直接在側邊欄顯示完整詳情（popup 不會關閉）；點側邊欄 X 或點地圖空白處都會換回提示文字。
     // =============================================
     function renderMapLocations(data) {
       if (!map) return;
       markers.forEach(m => map.removeLayer(m));
       markers = [];
-
-      const list = document.getElementById('locationList');
-      list.innerHTML = '';
+      markerByLocId = {};
+      closeDetailPanel(); // 資料重新渲染（例如篩選條件變了）時，先收掉舊的側邊欄/sheet，避免內容跟新資料兜不起來
 
       if (data.length === 0) {
-        list.innerHTML = '<div style="padding:20px;color:var(--grey);text-align:center;">找不到符合的地點 இдஇ</div>';
+        // 篩選結果是 0 筆時，蓋掉 closeDetailPanel 剛設定的預設提示文字，改顯示明確的空狀態
+        document.getElementById('locationList').innerHTML = '<div class="sidebar-placeholder">找不到符合的地點 இдஇ</div>';
         return;
       }
 
-      data.forEach((loc, i) => {
-        const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.city + loc.addr)}`;
-        const imgs = loc.image
-          ? loc.image.split(',').map(s => driveUrlToImage(s.trim())).filter(Boolean)
-          : [];
+      // 依經緯度分組：同一地點（同一商場）常常有好幾台機器共用同一組座標
+      const groups = {};
+      data.forEach(loc => {
+        const key = `${loc.lat},${loc.lng}`;
+        (groups[key] = groups[key] || []).push(loc);
+      });
 
-        // 圖片 HTML（原始版 popup 樣式）
-        let imgHtml = '';
-        if (imgs.length === 1) {
-          imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" /></div>`;
-        } else if (imgs.length > 1) {
-          const cid = 'map-carousel-' + i;
-          imgHtml = `
-            <div class="popup-img-wrap">
-              <div class="carousel" id="${cid}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
-                <div class="carousel-img-wrap">
-                  <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
-                </div>
-                <div class="carousel-controls">
-                  <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${cid}">&#8249;</button>
-                  <span class="carousel-counter">1 / ${imgs.length}</span>
-                  <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${cid}">&#8250;</button>
-                </div>
-              </div>
-            </div>`;
+      Object.values(groups).forEach(locs => {
+        const { lat, lng } = locs[0];
+        const marker = L.marker([lat, lng], { icon: createClusterIcon(locs) }).addTo(map);
+        markers.push(marker);
+        locs.forEach(loc => { markerByLocId[loc.id] = marker; });
+        marker.__locs = locs;
+
+        if (locs.length > 1) {
+          // 一開始就綁好 popup（不要等點擊時才延遲綁定）。
+          // bindPopup() 本身會自動幫 marker 加上「已開啟就關閉、沒開啟就打開」的內建 click 監聽器，
+          // 如果我們自己又手動呼叫 openPopup()，兩邊會在同一次點擊裡互相打架
+          // （第一次點沒事，因為內建監聽器是在點擊當下才被加進去、來不及在同一輪觸發；
+          //  但只要點過一次之後，兩個監聽器都會生效，變成「我們打開、它馬上關掉」，看起來像沒反應）。
+          // 所以這裡只負責綁定內容，開合完全交給 Leaflet 自己的內建行為處理。
+          bindClusterPopup(marker, locs);
         }
 
-        // Marker + popup（原始版）
-        const marker = L.marker([loc.lat, loc.lng], { icon: customIcon })
-          .addTo(map)
-          .bindPopup(`
-            <div data-machine-id="${loc.id}">
-            <button class="popup-close-btn" onclick="map.closePopup()">✕</button>
-            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}" style="margin-bottom:12px;">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
-            <div class="modal-header">
-              <div class="popup-title">${loc.name}</div>
-            </div>
-            ${loc.limited ? `<div class="popup-limited">期間限定：${loc.limited}</div>` : ''}
-            <div class="modal-info-section">
-              ${loc.venue ? `<div class="popup-addr">地點：${loc.venue}</div>` : ''}
-              <div class="popup-addr">地址：${loc.addr}</div>
-              ${loc.character ? `<div class="popup-addr">IP：${loc.character}</div>` : ''}
-              ${loc.edition ? `<div class="popup-addr">彈數：${loc.edition}</div>` : ''}
-              ${loc.perDraw ? `<div class="popup-addr">一抽張數：${loc.perDraw}</div>` : ''}
-              ${loc.hours ? `<div class="popup-addr">營業時間：${loc.hours}</div>` : ''}
-              ${loc.note ? `<div class="popup-addr">備註：${loc.note}</div>` : ''}
-            </div>
-            <div class="popup-actions">
-              <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link" onclick="trackGmapsClick('${loc.id}','map_popup')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 前往 Google Maps 查看 →</a>
-              <button class="popup-share-btn" onclick="shareLocation('${loc.id}','map_popup')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
-            </div>
-            ${imgHtml}
-            </div>
-          `, {
-            maxWidth: 320,
-            autoPan: false,
-            closeButton: false
-          });
-        markers.push(marker);
-
-        // GA: map_marker_click（直接點地圖圖示，跟透過清單卡片觸發的 card_click 是不同路徑）
         marker.on('click', () => {
+          // GA: map_marker_click
           gtag('event', 'map_marker_click', {
-            machine_id: loc.id,
-            machine_type: loc.type,
+            machine_id: locs.length === 1 ? locs[0].id : null,
+            machine_count: locs.length,
             device: getDeviceType(),
           });
-        });
 
-        // 側邊欄卡片（原始版）
-        const card = document.createElement('div');
-        card.className = 'loc-card';
-        card.innerHTML = `
-          <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
-          <div class="loc-name">${loc.name}</div>
-          ${loc.limited ? `<div class="loc-limited">期間限定：${loc.limited}</div>` : ''}
-          <div class="loc-tags">
-            ${loc.character ? `<span class="tag">${loc.character}</span>` : ''}
-            ${loc.city ? `<span class="tag">${loc.city}</span>` : ''}
-            ${loc.venue ? `<span class="tag">${loc.venue}</span>` : ''}
-          </div>
-        `;
-        card.addEventListener('click', () => {
-          document.querySelectorAll('.loc-card').forEach(c => c.classList.remove('active'));
-          card.classList.add('active');
-          // GA: card_click
-          gtag('event', 'card_click', {
-            machine_id: loc.id,
-            machine_name: loc.name,
-            machine_type: loc.type,
-            source: 'map_list',
-          });
-          map.once('moveend', () => marker.openPopup());
+          if (locs.length === 1) {
+            if (isMobileMapLayout()) {
+              map.closePopup(); // 關掉任何還留著的 cluster popup，不然它會卡在「已開啟」狀態，之後點回去沒反應
+              openMobileSheetSummary(locs[0]);
+            } else {
+              map.closePopup();
+              openDesktopSidebar(locs[0]);
+            }
+          }
+          // locs.length > 1（cluster）完全交給 Leaflet 內建的 click-toggle 行為處理，這裡不用再做事
         });
-        list.appendChild(card);
       });
+    }
+
+    // ---- 內容組裝：完整詳情／精簡摘要共用同一份欄位邏輯 ----
+    function buildDetailContentHtml(loc, { compact = false } = {}) {
+      const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(loc.city + loc.addr)}`;
+      const typeBadge = `<div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>`;
+      // close 按鈕跟 badge 放同一個 flex row、align-items:center 垂直置中，
+      // 不再靠 popup-close-btn 原本的 position:absolute;top:4px 硬定位（那個沒辦法保證跟 badge 對齊）
+      const headerRow = `
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+          ${typeBadge}
+          <button class="popup-close-btn" style="position:static;" onclick="closeDetailPanel()">✕</button>
+        </div>
+      `;
+      const basicRows = `
+        ${loc.venue ? `<div class="popup-addr">場地：${loc.venue}</div>` : ''}
+        ${loc.addr ? `<div class="popup-addr">地址：${loc.addr}</div>` : ''}
+        ${loc.character ? `<div class="popup-addr">IP：${loc.character}</div>` : ''}
+        ${loc.edition ? `<div class="popup-addr">彈數：${loc.edition}</div>` : ''}
+      `;
+
+      if (compact) {
+        return `
+          ${headerRow}
+          <div class="modal-header"><div class="popup-title">${loc.name}</div></div>
+          ${loc.limited ? `<div class="popup-limited">期間限定：${loc.limited}</div>` : ''}
+          <div class="modal-info-section">${basicRows}</div>
+        `;
+      }
+
+      const imgs = loc.image ? loc.image.split(',').map(s => driveUrlToImage(s.trim())).filter(Boolean) : [];
+      let imgHtml = '';
+      if (imgs.length === 1) {
+        imgHtml = `<div class="popup-img-wrap"><img src="${imgs[0]}" class="popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" /></div>`;
+      } else if (imgs.length > 1) {
+        const cid = 'detail-carousel-' + loc.id;
+        imgHtml = `
+          <div class="popup-img-wrap">
+            <div class="carousel" id="${cid}" data-index="0" data-imgs='${JSON.stringify(imgs)}'>
+              <div class="carousel-img-wrap">
+                <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
+              </div>
+              <div class="carousel-controls">
+                <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${cid}">&#8249;</button>
+                <span class="carousel-counter">1 / ${imgs.length}</span>
+                <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${cid}">&#8250;</button>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      return `
+        ${headerRow}
+        <div class="modal-header"><div class="popup-title">${loc.name}</div></div>
+        ${loc.limited ? `<div class="popup-limited">期間限定：${loc.limited}</div>` : ''}
+        <div class="modal-info-section">
+          ${basicRows}
+          ${loc.perDraw ? `<div class="popup-addr">一抽張數：${loc.perDraw}</div>` : ''}
+          ${loc.hours ? `<div class="popup-addr">營業時間：${loc.hours}</div>` : ''}
+          ${loc.note ? `<div class="popup-addr">備註：${loc.note}</div>` : ''}
+        </div>
+        <div class="popup-actions">
+          <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link" onclick="trackGmapsClick('${loc.id}','map_detail_panel')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 前往 Google Maps 查看 →</a>
+          <button class="popup-share-btn" onclick="shareLocation('${loc.id}','map_detail_panel')">分享 <svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M648-96q-50 0-85-35t-35-85q0-9 4-29L295-390q-16 14-36.05 22-20.04 8-42.95 8-50 0-85-35t-35-85q0-50 35-85t85-35q23 0 43 8t36 22l237-145q-2-7-3-13.81-1-6.81-1-15.19 0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35q-23 0-43-8t-36-22L332-509q2 7 3 13.81 1 6.81 1 15.19 0 8.38-1 15.19-1 6.81-3 13.81l237 145q16-14 36.05-22 20.04-8 42.95-8 50 0 85 35t35 85q0 50-35 85t-85 35Zm0-72q20.4 0 34.2-13.8Q696-195.6 696-216q0-20.4-13.8-34.2Q668.4-264 648-264q-20.4 0-34.2 13.8Q600-236.4 600-216q0 20.4 13.8 34.2Q627.6-168 648-168ZM216-432q20.4 0 34.2-14 13.8-14 13.8-34t-13.8-34q-13.8-14-34.2-14-20.4 0-34.2 14-13.8 14-13.8 34t13.8 34q13.8 14 34.2 14Zm466-277.8q14-13.8 14-34.2 0-20.4-13.8-34.2Q668.4-792 648-792q-20.4 0-34.2 13.8Q600-764.4 600-744q0 20.4 14 34.2 14 13.8 34 13.8t34-13.8ZM648-216ZM216-480Zm432-264Z"/></svg></button>
+        </div>
+        ${imgHtml}
+      `;
+    }
+
+    // ---- Desktop：cluster marker 維持浮動 Leaflet popup（不受這次改版影響）----
+    function bindClusterPopup(marker, locs) {
+      // 大標題：同座標多台機器如果店名（C欄）都一樣就顯示店名；
+      // 店名不一樣就退回顯示場地（D欄）；連場地都沒有才用地址（F欄）
+      const uniqueNames = [...new Set(locs.map(l => l.name).filter(Boolean))];
+      const venue = uniqueNames.length === 1
+        ? uniqueNames[0]
+        : (locs[0].venue || locs[0].addr || '');
+      const namesAllSame = uniqueNames.length === 1;
+      const rowsHtml = locs.map(loc => {
+        const primary = loc.character || loc.name; // 優先顯示 IP，沒有 IP 資料時退回顯示活動名稱
+        // 店名都一樣的話，大標題已經顯示過了，選項底下不用再重複顯示同一個店名
+        const showSub = !namesAllSame && loc.character && loc.name && loc.name !== primary;
+        return `
+          <button class="cluster-popup-item" type="button" data-loc-id="${loc.id}">
+            <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${MARKER_ICON_SVG[loc.type] || ''}</div>
+            <span class="cluster-popup-item-text">
+              <span class="cluster-popup-item-name">${primary}</span>
+              ${showSub ? `<span class="cluster-popup-item-sub">${loc.name}</span>` : ''}
+            </span>
+          </button>`;
+      }).join('');
+
+      // 清單直接跟著標題一起組成完整字串綁給 bindPopup，
+      // Leaflet 從一開始量測到的就是完整內容，寬度才會抓對，也不需要事後再 update()
+      marker.bindPopup(`
+        <div>
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+            <div class="popup-title" style="white-space:nowrap;">${venue}</div>
+            <button class="popup-close-btn" style="position:static; flex-shrink:0;" onclick="map.closePopup()">✕</button>
+          </div>
+          <div class="popup-addr" style="margin-top:8px;margin-bottom:12px;color:var(--fill-gray-64);">目前有 ${locs.length} 台機器</div>
+          <div class="cluster-popup-list">${rowsHtml}</div>
+        </div>
+      `, { maxWidth: 420, autoPan: false, closeButton: false });
+
+      // popupopen 只負責幫已經渲染好的按鈕綁點擊事件，不再碰 innerHTML
+      marker.on('popupopen', () => {
+        const el = marker.getPopup().getElement();
+        if (!el) return;
+        el.querySelectorAll('.cluster-popup-item').forEach(btn => {
+          if (btn.dataset.bound) return; // 避免同一顆按鈕重複綁定
+          btn.dataset.bound = '1';
+          btn.addEventListener('click', () => {
+            const loc = locs.find(l => String(l.id) === btn.dataset.locId);
+            if (!loc) return;
+            gtag('event', 'card_click', { machine_id: loc.id, machine_name: loc.name, machine_type: loc.type, source: 'map_cluster_popup' });
+            // popup 保持開著，mobile／desktop 一致；mobile 用 sheet 顯示摘要卡，desktop 用側邊欄顯示完整詳情
+            if (isMobileMapLayout()) {
+              openMobileSheetSummary(loc);
+            } else {
+              openDesktopSidebar(loc);
+            }
+          });
+        });
+      });
+    }
+
+    // ---- Desktop：側邊欄固定寬 400 常駐，預設顯示提示文字；點單一 marker，或 cluster popup 清單裡的項目，才會換成詳情 ----
+    function openDesktopSidebar(loc) {
+      document.getElementById('locationList').innerHTML = buildDetailContentHtml(loc, { compact: false });
+      highlightMarker(loc);
+      if (map) setTimeout(() => map.invalidateSize(), 0);
+    }
+
+    // ---- Mobile：bottom sheet（兩段：摘要卡 / 完整詳情；預設是小 peek + 提示文字，不是真的「無 sheet」）----
+    let sheetLevel = 'default';  // 'default' | 'summary' | 'full'
+    let sheetLoc = null;         // 目前顯示摘要／完整詳情的那一筆
+
+    function sheetLevelsStack() {
+      // 沒選中任何地點時（預設提示文字），handle 一樣可以拖，只是拖上去內容還是提示文字；
+      // 選了地點之後才是 summary/full 兩層完整內容
+      return sheetLoc ? ['summary', 'full'] : ['default', 'full'];
+    }
+
+    function applySheetLevel(level) {
+      sheetLevel = level;
+      const sidebar = document.querySelector('.sidebar');
+      sidebar.style.height = levelHeightPx(level) + 'px';
+
+      if (!sheetLoc) {
+        document.getElementById('locationList').innerHTML = `<div class="sidebar-placeholder">點選地圖上的圖示，查看機台詳細資訊</div>`;
+      } else {
+        // summary／full 都是完整內容，差別只在 sheet 高度：
+        // summary 高度矮，視覺上只露出 badge + 標題，往上拖同一份內容就會露出剩下的部分
+        document.getElementById('locationList').innerHTML = buildDetailContentHtml(sheetLoc, { compact: false });
+      }
+
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+    }
+
+    function openMobileSheetSummary(loc) {
+      sheetLoc = loc;
+      highlightMarker(loc);
+      applySheetLevel('summary');
+    }
+
+    // ---- 共用：關閉 sheet／清空側邊欄詳情，回到「預設」狀態（兩邊平台文案一致）----
+    // Mobile：sheet 收回小 peek，顯示提示文字。Desktop：側邊欄固定常駐，只是內容換回提示文字。
+    function closeDetailPanel() {
+      sheetLoc = null;
+      document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
+      if (isMobileMapLayout()) {
+        applySheetLevel('default');
+      } else {
+        renderDesktopPlaceholder();
+      }
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+    }
+
+    function renderDesktopPlaceholder() {
+      const list = document.getElementById('locationList');
+      if (!list) return;
+      list.innerHTML = `<div class="sidebar-placeholder">點選地圖上的圖示，查看機台詳細資訊</div>`;
+    }
+
+    function highlightMarker(loc) {
+      document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
+      const marker = markerByLocId[loc.id];
+      if (!marker) return;
+      const el = marker.getElement();
+      if (el) el.classList.add('selected');
+    }
+
+    // 判斷目前是不是走 mobile 地圖版型：跟 CSS 的 640px 斷點對齊，
+    // 跟 getDeviceType()（用 pointer:coarse 判斷、給 GA 用）分開，
+    // 避免「觸控筆電＋寬螢幕」這種邊界情況兩邊判斷對不上。
+    function isMobileMapLayout() {
+      return window.matchMedia('(max-width: 640px)').matches;
     }
 
     // =============================================
@@ -1064,7 +1284,7 @@
         const firstRow = parseCSVRow(rows[1] || '');
         const lastUpdated = firstRow[15] || '';
         const lastUpdatedText = lastUpdated ? '最後更新：' + lastUpdated : '社群共建 · 持續更新';
-        ['lastUpdated', 'listLastUpdated', 'mapLastUpdated'].forEach(id => {
+        ['lastUpdated', 'listLastUpdated'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.textContent = lastUpdatedText;
         });
@@ -1130,7 +1350,6 @@
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       document.getElementById('countBadge').textContent = data.length;
-      document.getElementById('mobileCountBadge').textContent = data.length;
 
       if (data.length === 0) {
         grid.innerHTML = '<div class="empty-state">找不到符合的地點 இдஇ</div>';
@@ -1169,7 +1388,7 @@
           const t = [loc.edition ? `彈數：${loc.edition}` : '', loc.perDraw ? `一抽：${loc.perDraw}張` : ''].filter(Boolean).join('　');
           detailHtml += `<div class="detail-row"><span class="detail-text">${t}</span></div>`;
         }
-        if (loc.note) detailHtml += `<div class="detail-row"><span class="detail-text">${loc.note}</span></div>`;
+        if (loc.note) detailHtml += `<div class="detail-row"><span class="detail-text">備註：${loc.note}</span></div>`;
         if (imageHtml) detailHtml += imageHtml;
 
         const card = document.createElement('div');
@@ -1216,7 +1435,6 @@
     // =============================================
     function syncCount(n) {
       document.getElementById('countBadge').textContent = n;
-      document.getElementById('mobileCountBadge').textContent = n;
     }
 
     function applyFilters() {
@@ -1591,43 +1809,18 @@
       applyFilters();
     });
 
-    document.getElementById('mapSearchInput').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus', { source: 'map' });
-    });
-    document.getElementById('mapSearchInput').addEventListener('input', function () {
-      document.getElementById('clearMapSearch').style.display = this.value ? 'block' : 'none';
-      document.getElementById('searchInput').value = this.value;
-      document.getElementById('searchInputMobile').value = this.value;
-      document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
-      document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
-      trackSearch(this.value.trim().toLowerCase());
-      applyFilters();
-    });
     document.getElementById('clearSearch').addEventListener('click', function () {
       document.getElementById('searchInput').value = '';
       document.getElementById('searchInputMobile').value = '';
-      document.getElementById('mapSearchInput').value = '';
       this.style.display = 'none';
       document.getElementById('clearSearchMobile').style.display = 'none';
-      document.getElementById('clearMapSearch').style.display = 'none';
       applyFilters();
     });
     document.getElementById('clearSearchMobile').addEventListener('click', function () {
       document.getElementById('searchInputMobile').value = '';
       document.getElementById('searchInput').value = '';
-      document.getElementById('mapSearchInput').value = '';
       this.style.display = 'none';
       document.getElementById('clearSearch').style.display = 'none';
-      document.getElementById('clearMapSearch').style.display = 'none';
-      applyFilters();
-    });
-    document.getElementById('clearMapSearch').addEventListener('click', function () {
-      document.getElementById('searchInput').value = '';
-      document.getElementById('searchInputMobile').value = '';
-      document.getElementById('mapSearchInput').value = '';
-      this.style.display = 'none';
-      document.getElementById('clearSearch').style.display = 'none';
-      document.getElementById('clearSearchMobile').style.display = 'none';
       applyFilters();
     });
 
@@ -1732,7 +1925,7 @@
           ${loc.character ? `<div class="popup-addr">IP：${loc.character}</div>` : ''}
           ${loc.edition ? `<div class="popup-addr">彈數：${loc.edition}</div>` : ''}
           ${loc.perDraw ? `<div class="popup-addr">價格與張數：${loc.perDraw}</div>` : ''}
-          ${loc.note ? `<div class="popup-addr">${loc.note}</div>` : ''}
+          ${loc.note ? `<div class="popup-addr">備註：${loc.note}</div>` : ''}
         </div>
         <div class="popup-actions">
           <a href="${googleMapsUrl}" target="_blank" class="popup-gmaps-link" onclick="trackGmapsClick('${loc.id}','${source}')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg> 在 Google Maps 查看 →</a>
@@ -1777,20 +1970,21 @@
     }
 
     // =============================================
-    // 📋 Bottom Sheet（mobile 地圖模式）
+    // 📋 Bottom Sheet 手勢（mobile 地圖模式）
+    // 拖曳 handle 時即時跟手；放開時依拖曳距離判斷停在哪一層。
+    // 每次手勢最多移動一層；收到 summary（mini peek）之後再往下滑不會消失，
+    // 只有點 X（closeDetailPanel）才會整個收回「預設」狀態。
     // =============================================
-    function openSheet() {
-      const sidebar = document.querySelector('.sidebar');
-      sidebar.style.height = '';
-      sidebar.classList.add('sheet-open');
-      if (map) setTimeout(() => map.invalidateSize(), 320);
-    }
+    const SHEET_DEFAULT_HEIGHT = 80; // default（提示文字）：handle(~36px) + 上下各 20px padding + 一行文字
+    const SHEET_MINI_HEIGHT = 100;   // summary（收合摘要卡）的固定高度
 
-    function peekSheet() {
-      const sidebar = document.querySelector('.sidebar');
-      sidebar.style.height = '';
-      sidebar.classList.remove('sheet-open');
-      if (map) setTimeout(() => map.invalidateSize(), 320);
+    function levelHeightPx(level) {
+      if (level === 'default') return SHEET_DEFAULT_HEIGHT;
+      if (level !== 'full') return SHEET_MINI_HEIGHT;
+      // 完整展開最高只能頂到篩選列下緣，不能蓋住搜尋框／篩選器
+      const filterBar = document.getElementById('filterBar');
+      const topLimit = filterBar ? filterBar.getBoundingClientRect().bottom + 8 : window.innerHeight * 0.3;
+      return Math.max(window.innerHeight - topLimit, window.innerHeight * 0.4);
     }
 
     function initBottomSheet() {
@@ -1800,35 +1994,38 @@
       handle.dataset.sheetInit = '1';
 
       let startY = 0;
-      let isOpen = false;
+      let startHeight = 0;
 
       handle.addEventListener('touchstart', function(e) {
         startY = e.touches[0].clientY;
+        startHeight = sidebar.getBoundingClientRect().height;
         sidebar.style.transition = 'none';
       }, { passive: true });
 
       handle.addEventListener('touchmove', function(e) {
         const dy = startY - e.touches[0].clientY;
-        const baseHeight = isOpen ? window.innerHeight * 0.5 : 120;
-        const newHeight = Math.min(Math.max(baseHeight + dy, 120), window.innerHeight * 0.5);
+        const levels = sheetLevelsStack();
+        const minH = levelHeightPx(levels[0]);
+        const maxH = levelHeightPx('full');
+        const newHeight = Math.min(Math.max(startHeight + dy, minH), maxH);
         sidebar.style.height = newHeight + 'px';
       }, { passive: true });
 
       handle.addEventListener('touchend', function(e) {
         sidebar.style.transition = '';
         const dy = startY - e.changedTouches[0].clientY;
-        if (!isOpen && dy > 50) {
-          isOpen = true; openSheet();
-          gtag('event', 'sheet_toggle', { state: 'open' }); // GA：只在真正拖拉造成狀態改變時記錄
+        const levels = sheetLevelsStack();
+        const curIdx = levels.indexOf(sheetLevel);
+        let nextIdx = curIdx;
+        if (dy > 50 && curIdx < levels.length - 1) nextIdx = curIdx + 1;      // 往上滑：展開一層
+        else if (dy < -50 && curIdx > 0) nextIdx = curIdx - 1;               // 往下滑：收合一層（不會低於清單/摘要層）
+        applySheetLevel(levels[nextIdx]);
+        if (nextIdx !== curIdx) {
+          gtag('event', 'sheet_toggle', { state: levels[nextIdx] }); // GA：只在真正拖拉造成狀態改變時記錄
         }
-        else if (isOpen && dy < -50) {
-          isOpen = false; peekSheet();
-          gtag('event', 'sheet_toggle', { state: 'peek' });
-        }
-        else { isOpen ? openSheet() : peekSheet(); }
       });
-
     }
+
 
     function openLightbox(src, machineId) {
       document.getElementById('lightboxImg').src = src;
