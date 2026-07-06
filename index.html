@@ -8,7 +8,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
-  <meta name="description" content="想找抽卡機 / 相卡機？來「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！">
+  <meta name="description" content="想找抽卡機 / 相卡機？到「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！">
 
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-NGGBNKBJB9"></script>
@@ -2209,6 +2209,7 @@
       let deferredPrompt = null;
       let engagementMet = false;
       let bannerShownOnce = false;
+      let installedViaBanner = false; // 記錄這次安裝是不是透過我們的 banner 按鈕促成的，appinstalled 觸發時要用
       const banner = document.getElementById('a2hsBanner');
       const desc = document.getElementById('a2hsDesc');
       const actionBtn = document.getElementById('a2hsAction');
@@ -2235,6 +2236,7 @@
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
             gtag('event', 'a2hs_prompt_result', { outcome, platform: 'android' });
+            if (outcome === 'accepted') installedViaBanner = true;
             deferredPrompt = null;
           };
           showBanner('android');
@@ -2265,7 +2267,10 @@
       function markEngaged(reason) {
         if (engagementMet) return;
         engagementMet = true;
-        gtag('event', 'a2hs_engagement_met', { reason });
+        gtag('event', 'a2hs_engagement_met', {
+          reason,
+          platform: isAndroid ? 'android' : (isIos ? 'ios' : 'other'),
+        });
         tryTrigger();
       }
 
@@ -2286,7 +2291,10 @@
       });
       window.addEventListener('appinstalled', () => {
         banner.classList.remove('show');
-        gtag('event', 'pwa_installed');
+        gtag('event', 'pwa_installed', {
+          platform: isAndroid ? 'android' : (isIos ? 'ios' : 'other'),
+          source: installedViaBanner ? 'a2hs_banner' : 'native_browser_ui',
+        });
       });
       closeBtn?.addEventListener('click', () => dismiss('close_x'));
     })();
@@ -2301,6 +2309,12 @@
         });
       });
     }
+
+    // GA：這次是用已安裝的 PWA（standalone）打開，還是一般瀏覽器 —— 用來驗證安裝後有沒有真的被回訪使用
+    gtag('event', 'pwa_launch_mode', {
+      mode: (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)
+        ? 'standalone' : 'browser',
+    });
 
     // 初始化
     setView('grid');

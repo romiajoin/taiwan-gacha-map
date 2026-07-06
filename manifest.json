@@ -1,7 +1,7 @@
 {
   "name": "抽卡機在哪！Card Radar",
   "short_name": "Card Radar",
-  "description": "想找抽卡機 / 相卡機？來「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！",
+  "description": "想找抽卡機 / 相卡機？到「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

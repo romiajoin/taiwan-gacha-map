@@ -9,7 +9,7 @@
 const SITE_URL = 'https://cardradartw.vercel.app';
 const OG_IMAGE_URL = `${SITE_URL}/og.png`;
 const TITLE = '抽卡機在哪！Card Radar';
-const DESCRIPTION = '想找抽卡機 / 相卡機？來「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！';
+const DESCRIPTION = '想找抽卡機 / 相卡機？到「抽卡機在哪！Card Radar」找找，快速掌握最新的機台資訊！';
 
 module.exports = function handler(req, res) {
   const id = req.query.id || '';
