@@ -2,6 +2,9 @@
 <html lang="zh-TW">
 <head>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="theme-color" content="#0066FF">
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>抽卡機在哪！Card Radar</title>
@@ -43,6 +46,9 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Card Radar">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'" />
@@ -171,6 +177,77 @@
       font-family: 'Space Mono', monospace;
       font-weight: 700;
       margin: 0 3px;
+    }
+
+    /* ===== A2HS（加到主畫面）Banner ===== */
+    .a2hs-banner {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: 12px;
+      z-index: 2100; /* 蓋過手機地圖模式的 bottom sheet（z-index: 2000），不管 sheet 展開到哪一層都疊在最上面 */
+      background: rgba(255,255,255,0.72);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--fill-blue);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      display: none;
+    }
+    .a2hs-banner.show { display: block; }
+    /* 平板（含 iPad、Android 平板）：固定寬度置中，不用滿版貼滿左右 */
+    @media (min-width: 768px) {
+      .a2hs-banner {
+        left: 50%;
+        right: auto;
+        bottom: 12px;
+        width: 400px;
+        transform: translateX(-50%);
+      }
+    }
+    .a2hs-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .a2hs-icon { flex-shrink: 0; color: var(--fill-blue); }
+    .a2hs-title {
+      flex: 1;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--fill-blue);
+    }
+    .a2hs-close {
+      flex-shrink: 0;
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: var(--fill-black); line-height: 0;
+    }
+    .a2hs-bottom-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .a2hs-desc {
+      flex: 1;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px;
+      line-height: 21px;
+      color: var(--fill-black);
+    }
+    .a2hs-action {
+      flex-shrink: 0;
+      background: var(--fill-blue);
+      color: var(--fill-white);
+      border: none;
+      border-radius: 9999px;
+      padding: 8px 12px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
     }
 
     /* ===== Filter Pills (dropdown) ===== */
@@ -833,8 +910,24 @@
     </div>
   </div>
 
+  <div id="share-toast"></div>
+
+  <!-- A2HS（加到主畫面）Banner -->
+  <div class="a2hs-banner" id="a2hsBanner">
+    <div class="a2hs-top-row">
+      <svg class="a2hs-icon" xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M444-444v120q0 15.3 10.29 25.65Q464.58-288 479.79-288t25.71-10.35Q516-308.7 516-324v-120h120q15.3 0 25.65-10.29Q672-464.58 672-479.79t-10.35-25.71Q651.3-516 636-516H516v-120q0-15.3-10.29-25.65Q495.42-672 480.21-672t-25.71 10.35Q444-651.3 444-636v120H324q-15.3 0-25.65 10.29Q288-495.42 288-480.21t10.35 25.71Q308.7-444 324-444h120Zm48 348q-81 0-153-30t-126-81.66q-54-51.66-85.5-121.5T96-478.81q0-79.81 30-150T208.5-751q52.5-52 122.31-82.5T480-864q81 0 150.84 31.68 69.84 31.69 121.5 86Q804-692 834-619.64q30 72.36 30 154.64v297q0 29.7-21.15 50.85Q821.7-96 792-96H492Z"/></svg>
+      <span class="a2hs-title">把 Card Radar 加到主畫面</span>
+      <button class="a2hs-close" id="a2hsClose" aria-label="關閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+    </div>
+    <div class="a2hs-bottom-row">
+      <p class="a2hs-desc" id="a2hsDesc"></p>
+      <button class="a2hs-action" id="a2hsAction"></button>
+    </div>
+  </div>
+
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQgBZrLfJlb-JY9YGm3o9vX5w3jG9hojq5E79tStxW1g89rKpuMnaRi1vA833KmZbilAAv9vrhttqQh/pub?gid=0&single=true&output=csv';
+
 
     // =============================================
     // 🗂️ SVG Icons
@@ -1008,6 +1101,7 @@
           });
 
           if (locs.length === 1) {
+            window.a2hsRecordCardView && window.a2hsRecordCardView();
             if (isMobileMapLayout()) {
               map.closePopup(); // 關掉任何還留著的 cluster popup，不然它會卡在「已開啟」狀態，之後點回去沒反應
               openMobileSheetSummary(locs[0]);
@@ -1400,6 +1494,7 @@
               machine_type: loc.type,
               source: 'grid',
             });
+            window.a2hsRecordCardView && window.a2hsRecordCardView();
             openGridModal(loc, imgs, googleMapsUrl, 'grid_modal');
           });
         }
@@ -2052,11 +2147,164 @@
     }
     loadVisitorCount();
 
+    // =============================================
+    // 📲 A2HS（加到主畫面）Banner
+    // 顯示時機（iOS / Android 共用同一套判斷，不再各自用「瀏覽器事件」或「固定延遲」決定）：
+    //   累計點擊「查看詳情」（grid 詳情 or 地圖 marker）達 3 次（跨造訪永久累計，存 localStorage）
+    //   或 單次瀏覽停留超過 20 秒
+    //   兩者達成其一即可
+    // 平台差異只影響「達成門檻後要顯示什麼內容」：
+    // - Android：按鈕觸發原生安裝流程（但技術上仍需等瀏覽器發出 beforeinstallprompt 事件才能真的呼叫，
+    //   這點無法繞過；如果門檻已達成但事件還沒來，就先不顯示，事件一到馬上顯示）
+    // - iOS + Safari：純教學文案，按鈕與 X 都只是關閉
+    // - iOS + 非 Safari（LINE / IG / FB 內嵌瀏覽器）：先引導「用 Safari 開啟」
+    // 關閉次數 + 時間戳記做退避，避免同一裝置被一直打擾（localStorage 遺失也不會造成體驗災難）
+    // =============================================
+    (function () {
+      const DISMISS_KEY = 'a2hsDismiss';
+      const VIEWS_KEY = 'a2hsCardViews';
+      const MAX_DISMISS = 3;       // 關過 3 次後永久不再顯示
+      const COOLDOWN_DAYS = 14;    // 每次關閉後至少間隔 14 天才再問一次
+      const VIEW_THRESHOLD = 3;    // 累計查看詳情次數門檻
+      const DWELL_MS = 20000;      // 單次瀏覽停留門檻（20 秒）
+
+      function getDismissData() {
+        try { return JSON.parse(localStorage.getItem(DISMISS_KEY) || '{}'); }
+        catch (e) { return {}; }
+      }
+      function recordDismiss() {
+        const data = getDismissData();
+        const count = (data.count || 0) + 1;
+        try {
+          localStorage.setItem(DISMISS_KEY, JSON.stringify({ count, lastDismissed: Date.now() }));
+        } catch (e) { /* localStorage 不可用時靜默失敗，最壞情況只是多顯示幾次 */ }
+      }
+      function shouldShow() {
+        const data = getDismissData();
+        if (!data.count) return true;
+        if (data.count >= MAX_DISMISS) return false;
+        const daysSince = (Date.now() - (data.lastDismissed || 0)) / 86400000;
+        return daysSince > COOLDOWN_DAYS;
+      }
+      function isStandalone() {
+        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+      }
+      function getCumulativeViews() {
+        try { return parseInt(localStorage.getItem(VIEWS_KEY) || '0', 10) || 0; }
+        catch (e) { return 0; }
+      }
+      function bumpCumulativeViews() {
+        const next = getCumulativeViews() + 1;
+        try { localStorage.setItem(VIEWS_KEY, String(next)); } catch (e) { /* 最壞情況只是這次沒記到 */ }
+        return next;
+      }
+
+      const ua = navigator.userAgent.toLowerCase();
+      const isIos = /iphone|ipad|ipod/.test(ua);
+      const isAndroid = /android/.test(ua);
+      const isInAppBrowser = /line|instagram|fban|fbav|micromessenger/.test(ua);
+      // crios/fxios/edgios = iOS 上的 Chrome/Firefox/Edge（外殼是 Safari 引擎但不是真的 Safari App）
+      const isSafari = /safari/.test(ua) && !/crios|fxios|edgios/.test(ua) && !isInAppBrowser;
+
+      let deferredPrompt = null;
+      let engagementMet = false;
+      let bannerShownOnce = false;
+      const banner = document.getElementById('a2hsBanner');
+      const desc = document.getElementById('a2hsDesc');
+      const actionBtn = document.getElementById('a2hsAction');
+      const closeBtn = document.getElementById('a2hsClose');
+
+      function dismiss(reason) {
+        banner.classList.remove('show');
+        recordDismiss();
+        gtag('event', 'a2hs_banner_dismissed', { reason: reason || 'close' });
+      }
+
+      function showBanner(platform) {
+        banner.classList.add('show');
+        gtag('event', 'a2hs_banner_shown', { platform });
+      }
+
+      function renderForPlatform() {
+        if (isAndroid) {
+          desc.textContent = '下次找機台不用再開瀏覽器，點一下就開啟！';
+          actionBtn.textContent = '加到主畫面';
+          actionBtn.onclick = async () => {
+            banner.classList.remove('show');
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            gtag('event', 'a2hs_prompt_result', { outcome, platform: 'android' });
+            deferredPrompt = null;
+          };
+          showBanner('android');
+        } else if (isIos && !isSafari) {
+          desc.textContent = '在 Safari 開啟網頁 → 「⋯」→ 分享 → 加入主畫面，下次找機台不用再開瀏覽器，點一下就開啟！';
+          actionBtn.textContent = '我知道了';
+          actionBtn.onclick = () => dismiss('ack');
+          showBanner('ios_in_app');
+        } else if (isIos && isSafari) {
+          desc.textContent = '點擊「⋯」→ 分享 → 加入主畫面，下次找機台不用再開瀏覽器，點一下就開啟！';
+          actionBtn.textContent = '我知道了';
+          actionBtn.onclick = () => dismiss('ack');
+          showBanner('ios_safari');
+        }
+        // 其他平台（桌機等）不顯示
+      }
+
+      function tryTrigger() {
+        if (bannerShownOnce) return;
+        if (isStandalone() || !shouldShow() || !banner) return;
+        if (!engagementMet) return;
+        if (!isAndroid && !isIos) return;               // 桌機等其他平台不顯示
+        if (isAndroid && !deferredPrompt) return;        // Android 仍須等瀏覽器把安裝事件準備好，才有東西可觸發
+        bannerShownOnce = true;
+        renderForPlatform();
+      }
+
+      function markEngaged(reason) {
+        if (engagementMet) return;
+        engagementMet = true;
+        gtag('event', 'a2hs_engagement_met', { reason });
+        tryTrigger();
+      }
+
+      // 條件一：累計點擊「查看詳情」次數（跨造訪永久累計）
+      window.a2hsRecordCardView = function () {
+        const total = bumpCumulativeViews();
+        if (total >= VIEW_THRESHOLD) markEngaged('cumulative_views');
+      };
+      if (getCumulativeViews() >= VIEW_THRESHOLD) markEngaged('cumulative_views'); // 這次進站前就已經累計達標
+
+      // 條件二：本次瀏覽停留超過門檻秒數
+      setTimeout(() => markEngaged('dwell_time'), DWELL_MS);
+
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        tryTrigger(); // 事件來的時候，如果互動門檻早就達成了，馬上顯示
+      });
+      window.addEventListener('appinstalled', () => {
+        banner.classList.remove('show');
+        gtag('event', 'pwa_installed');
+      });
+      closeBtn?.addEventListener('click', () => dismiss('close_x'));
+    })();
+
+    // =============================================
+    // ⚙️ Service Worker 註冊（PWA 離線快取）
+    // =============================================
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch((err) => {
+          console.warn('Service worker 註冊失敗：', err);
+        });
+      });
+    }
+
     // 初始化
     setView('grid');
     loadFromSheet();
   </script>
-
-  <div id="share-toast"></div>
 </body>
 </html>
