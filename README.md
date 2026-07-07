@@ -3,7 +3,7 @@
 社群共建的台灣 IP 抽卡機 / 快閃活動查詢網站，資料由管理者維護於 Google Sheet，網站自動讀取並顯示。
 
 **🔗 [查看網站](https://cardradartw.vercel.app/)**  
-**最後更新：** 2026/07/03（v19）
+**最後更新：** 2026/07/06（v21）
 
 ---
 
@@ -13,12 +13,13 @@
 - 🔽 依機台類型、縣市、IP 篩選（多選，桌面版 dropdown 面板 / 手機版 bottom sheet）
 - 📍 點地標查看詳細資訊（場地、IP、彈數、一抽張數、期間限定、圖片）
 - 🖼️ 支援多張圖片輪播，點擊放大
-- 🗺️ 互動地圖，顯示全台抽卡機與 IP 快閃活動地點
-- 📱 手機版響應式設計（地圖全螢幕 + 底部 bottom sheet 列表）
+- 🗺️ 互動地圖，顯示全台抽卡機與 IP 快閃活動地點，自訂彩色圖示 + 同地點多機自動聚合
+- 📱 手機版響應式設計（地圖全螢幕 + 底部可拖拉的詳情面板）
 - 🗺️ 一鍵導航至 Google Maps
 - 📅 依期間限定結束日期排序
-- 🔗 分享單一地點連結（手機原生分享／桌機複製連結）
+- 🔗 分享單一地點連結，社群平台（LINE / Threads / Discord）預覽卡片有專屬標題與縮圖
 - 👣 顯示累計訪客人數
+- 📲 支援加入主畫面（PWA），可像 App 一樣從手機桌面開啟，離線時仍可查看上次載入的資料
 - 📋 回報表單，讓社群協助新增地點或回報錯誤
 
 ---
@@ -32,11 +33,13 @@
 | 資料來源 | Google Sheet（發布為公開 CSV） |
 | 圖片託管 | Cloudinary |
 | 網站託管 | Vercel（免費） |
+| Serverless Function | `api/share.js`（分享連結 OG meta 用，Vercel 免費方案內） |
+| PWA | `manifest.json` + Service Worker（split caching，v21 新增） |
 | 字體 | Chiron GoRound TC（400/500/700）、Space Mono（統計數字）|
 | 訪客計數 | counterapi.dev |
 | 數據分析 | Google Analytics 4（GA4） |
 
-**不需要後端、不需要資料庫、不需要 API 金鑰。**
+**不需要資料庫、不需要 API 金鑰。** 有一支極輕量的 serverless function（`api/share.js`）純粹是為了讓分享連結在 LINE/Threads 等平台顯示正確的預覽卡片，不涉及任何使用者資料或資料庫。
 
 ---
 
