@@ -102,6 +102,10 @@
     .logo h1 span { color: var(--fill-blue); }
     .header-right { display: flex; align-items: center; gap: 12px; }
     .header-info { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--fill-black); }
+    /* 桌面版：回報表單跟檢視切換之間的間距要是 16px，其餘子元素維持 header-right 既有的 12px gap，故補 4px margin 湊成 16px */
+    @media (min-width: 769px) {
+      .header-right .view-toggle { margin-left: 4px; }
+    }
 
     /* View Toggle */
     .view-toggle {
@@ -281,22 +285,29 @@
       .filter-pill:hover { color: var(--fill-blue); }
     }
     .filter-pill.active { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
-    .filter-pill .pill-chevron { flex-shrink: 0; transition: transform 0.18s; }
+    .filter-pill .pill-icon { flex-shrink: 0; display: inline-flex; }
+    .filter-pill .pill-clear { display: none; }
+    .filter-pill.active .pill-chevron { display: none; }
+    .filter-pill.active .pill-clear { display: inline-flex; }
+    .filter-pill .pill-chevron { transition: transform 0.18s; }
     .filter-pill.open .pill-chevron { transform: rotate(180deg); }
-    .filter-clear-link {
-      font-size: 14px;
-      color: var(--fill-black);
-      text-decoration: none;
-      cursor: pointer;
-      background: none; border: none; font-family: 'Noto Sans TC', sans-serif;
-      white-space: nowrap;
-    }
-    @media (hover: hover) {
-      .filter-clear-link:hover { color: var(--fill-blue); }
-    }
 
-    @media (min-width: 769px) {
-      .filter-clear-link { margin-left: 12px; }
+    /* 排序文字按鈕 */
+    .sort-group { position: relative; flex-shrink: 0; margin-left: 4px; } /* filter-bar 既有 gap:12px + 4px = 16px */
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 2px;
+      background: none; border: none; padding: 8px 0px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 14px; line-height: 16px;
+      color: var(--fill-black); cursor: pointer; white-space: nowrap;
+    }
+    .sort-btn .sort-label { display: flex; align-items: center; gap: 0px; }
+    @media (hover: hover) {
+      .sort-btn:hover { color: var(--fill-blue); }
+    }
+    .sort-btn .pill-chevron { flex-shrink: 0; transition: transform 0.18s; }
+    .sort-btn.open .pill-chevron { transform: rotate(180deg); }
+    @media (max-width: 768px) {
+      .sort-btn .sort-label { flex-direction: column; align-items: flex-start; gap: 0; }
     }
 
     /* Desktop dropdown panel */
@@ -338,12 +349,52 @@
     .filter-option:hover { background: var(--fill-blue-16); }
     .filter-option.selected { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
 
+    /* Desktop sort dropdown（單選，樣式沿用 filter-panel，但選項為直式列表） */
+    .sort-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--fill-white);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 20px;
+      width: max-content;
+      min-width: 160px;
+      z-index: 1200;
+    }
+    .sort-panel.open { display: flex; flex-direction: column; }
+    .sort-panel .sort-option + .sort-option { margin-top: 8px; }
+    .sort-option {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      border: none;
+      background: none;
+      color: var(--fill-black);
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sort-option:hover { background: var(--fill-blue-8); color: var(--fill-blue); }
+    .sort-option.selected { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+    .sort-hint {
+      font-size: 12px; color: var(--fill-gray-64);
+      padding: 0px 0px 16px; font-family: 'Noto Sans TC', sans-serif;
+      display: none;
+    }
+    .sort-hint.show { display: block; }
+
     /* Mobile filter sheet */
     .filter-sheet-overlay {
       display: none;
       position: fixed; inset: 0;
       background: rgba(0,0,0,0.32);
-      z-index: 1100;
+      z-index: 2200; /* 蓋過手機地圖模式的 pin 列表 sidebar（z-index: 2000），避免篩選/排序 sheet 被遮擋 */
     }
     .filter-sheet-overlay.show { display: block; }
     .filter-sheet {
@@ -352,7 +403,7 @@
       max-height: 40vh;
       background: var(--fill-gray6);
       border-radius: 16px 16px 0 0;
-      z-index: 1101;
+      z-index: 2201;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -379,6 +430,7 @@
       max-width: 100%;
       margin: 0 auto;
     }
+    #sortSheetOptions { display: flex; flex-direction: column; gap: 12px; }
 
     /* Badge */
     .type-badge {
@@ -395,10 +447,10 @@
     .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
 
     @media (max-width: 640px) {
-      .filter-bar { padding: 4px 20px 12px 0; gap: 0; }
-      .filter-scroll { overflow-x: auto; gap: 12px; padding-left: 20px; flex: 1; min-width: 0; }
+      .filter-bar { padding: 4px 20px 12px 20px; gap: 0; }
+      .filter-scroll { overflow-x: auto; gap: 12px; flex: 1; min-width: 0; }
       .filter-scroll::-webkit-scrollbar { display: none; }
-      .filter-clear-link { flex-shrink: 0; margin-left: 12px; }
+      .sort-group { flex-shrink: 0; margin-left: 16px; margin-right: 0px; }
     }
 
     /* ===== Content ===== */
@@ -718,10 +770,10 @@
       .search-box-desktop { display: none; }
       .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
       .search-box-mobile input { font-size: 16px; }
-      .filter-bar { padding: 4px 20px 12px 0; gap: 0; }
-      .filter-scroll { overflow-x: auto; gap: 12px; padding-left: 20px; flex: 1; min-width: 0; }
+      .filter-bar { padding: 4px 20px 12px 20px; gap: 0; }
+      .filter-scroll { overflow-x: auto; gap: 12px; flex: 1; min-width: 0; }
       .filter-scroll::-webkit-scrollbar { display: none; }
-      .filter-clear-link { flex-shrink: 0; margin-left: 12px; }
+      .sort-group { flex-shrink: 0; margin-left: 16px; margin-right: 0px; }
       .last-updated-list-row {
         display: flex; align-items: center; justify-content: center;
         gap: 8px; padding-bottom: 20px;
@@ -871,6 +923,18 @@
       </div>
     </div>
   </div>
+  <div class="filter-sheet-overlay" id="sortSheetOverlay">
+    <div class="filter-sheet" id="sortSheet" onclick="event.stopPropagation()">
+      <div class="filter-sheet-header">
+        <span class="filter-sheet-title">排序方式</span>
+        <button class="filter-sheet-close" id="sortSheetClose" aria-label="關閉"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="filter-sheet-body">
+        <div class="sort-hint" id="sortSheetHint"></div>
+        <div id="sortSheetOptions"></div>
+      </div>
+    </div>
+  </div>
   <div class="content">
     <!-- Grid View -->
     <div id="gridView">
@@ -951,6 +1015,18 @@
     let markers = [];
     let markerByLocId = {}; // loc.id -> 該機台所屬的 marker（同座標多機共用一個 marker，供列表點擊時對照用）
     let viewInitialized = false; // 避免初始化時觸發 view_toggle
+
+    // =============================================
+    // 🔽 排序設定（結束日期 / 距離）
+    // =============================================
+    const SORT_OPTIONS = [
+      { key: 'end_date_asc', label1: '結束日', label2: '近到遠', text: '結束日：近到遠' },
+      { key: 'distance_asc', label1: '距離',   label2: '近到遠', text: '距離：近到遠' },
+      { key: 'distance_desc', label1: '距離',  label2: '遠到近', text: '距離：遠到近' },
+    ];
+    let sortState = 'end_date_asc'; // default
+    let userCoords = null; // { lat, lng }，成功定位後才有值
+    let openSortPanel = false;
 
     // 地圖 marker 用的圖示（與既有 type-badge 同一套 path，白色描邊圓形，跟 OSM 底圖圖示做出區隔）
     const MARKER_ICON_SVG = {
@@ -1382,18 +1458,9 @@
           };
         }).filter(loc => loc.name && !isNaN(loc.lat) && !isNaN(loc.lng));
 
-        locations.sort((a, b) => {
-          const getEnd = l => {
-            if (!l) return new Date('9999/12/31');
-            const p = l.split('～');
-            return new Date(p[p.length-1].trim().replace(/\//g, '-'));
-          };
-          return getEnd(a.limited) - getEnd(b.limited);
-        });
-
         allLocations = locations;
-        currentFiltered = locations;
-        renderGrid(locations);
+        currentFiltered = sortLocations(locations);
+        renderGrid(currentFiltered);
         buildFilterOptions(locations);
         renderFilterBar();
 
@@ -1504,6 +1571,50 @@
     }
 
     // =============================================
+    // 🔍 排序邏輯（結束日期 / 距離）
+    // =============================================
+    function getEndDate(limited) {
+      if (!limited) return null; // null 代表無期限（常態機）
+      const p = limited.split('～');
+      return new Date(p[p.length - 1].trim().replace(/\//g, '-'));
+    }
+
+    function haversineKm(lat1, lng1, lat2, lng2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+      return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    }
+
+    function sortLocations(arr) {
+      const list = arr.slice();
+
+      if (sortState === 'distance_asc' || sortState === 'distance_desc') {
+        if (!userCoords) return list; // 理論上選取距離排序前一定已經拿到座標，這裡是防呆
+        list.sort((a, b) => {
+          const da = haversineKm(userCoords.lat, userCoords.lng, a.lat, a.lng);
+          const db = haversineKm(userCoords.lat, userCoords.lng, b.lat, b.lng);
+          return sortState === 'distance_asc' ? da - db : db - da;
+        });
+        return list;
+      }
+
+      // end_date_asc：有結束日期的排前面（近到遠），無期限的常態機永遠排最後，
+      // 常態機彼此之間依 IP 名稱排序（數字 → 筆畫 → 英文，跟篩選選項同一套慣例）
+      list.sort((a, b) => {
+        const ea = getEndDate(a.limited);
+        const eb = getEndDate(b.limited);
+        if (ea && eb) return ea - eb;
+        if (ea && !eb) return -1;
+        if (!ea && eb) return 1;
+        return (a.character || '').localeCompare(b.character || '', 'zh-Hant');
+      });
+      return list;
+    }
+
+    // =============================================
     // 🔍 搜尋 + 篩選
     // =============================================
     function syncCount(n) {
@@ -1526,6 +1637,7 @@
           loc.edition.toLowerCase().includes(kw);
         return matchFilters && matchKw;
       });
+      currentFiltered = sortLocations(currentFiltered);
       renderGrid(currentFiltered);
       syncCount(currentFiltered.length);
       if (map) renderMapLocations(currentFiltered);
@@ -1615,7 +1727,10 @@
         group.innerHTML = `
           <button class="filter-pill" data-key="${cfg.key}" type="button">
             <span class="pill-label">${pillLabelText(cfg)}</span>
-            <svg class="pill-chevron" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M461-403 318.88-545.19q-2.94-2.95-4.41-6.38Q313-555 313-558.5q0-7 4.95-12.25T331-576h298q8.1 0 13.05 5.4Q647-565.2 647-558q0 1-5.88 12.77L499-403q-4 4-9 6t-10 2q-5 0-10-2t-9-6Z"/></svg>
+            <span class="pill-icon" data-role="icon">
+              <svg class="pill-chevron" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M461-403 318.88-545.19q-2.94-2.95-4.41-6.38Q313-555 313-558.5q0-7 4.95-12.25T331-576h298q8.1 0 13.05 5.4Q647-565.2 647-558q0 1-5.88 12.77L499-403q-4 4-9 6t-10 2q-5 0-10-2t-9-6Z"/></svg>
+              <svg class="pill-clear" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="m480-429 116 116q11 11 25.5 10.5T647-314q11-11 11-25.5T647-365L531-480l116-116q11-11 11-25.5T647-647q-11-11-25.5-11T596-647L480-531 364-647q-11-11-25-11t-25 11q-11 11-11 25.5t11 25.5l115 116-116 116q-11 11-10.5 25t11.5 25q11 11 25.5 11t25.5-11l115-115Zm0 333q-79 0-149-30t-122.5-82.5Q156-261 126-331T96-480q0-80 30-149.5t82.5-122Q261-804 331-834t149-30q80 0 149.5 30t122 82.5Q804-699 834-629.5T864-480q0 79-30 149t-82.5 122.5Q699-156 629.5-126T480-96Z"/></svg>
+            </span>
           </button>
           <div class="filter-panel" data-panel="${cfg.key}">
             ${cfg.key === 'ip' ? `<div class="filter-panel-hint">依「數字 → 筆畫 → 英文」排序</div>` : ''}
@@ -1627,18 +1742,25 @@
         fitPanelWidth(group.querySelector('.filter-panel'));
       });
 
-      const clearLink = document.createElement('button');
-      clearLink.className = 'filter-clear-link';
-      clearLink.type = 'button';
-      clearLink.textContent = '清除篩選';
-      clearLink.addEventListener('click', clearAllFilters);
-      bar.appendChild(clearLink);
+      renderSortControl(bar);
 
       bar.querySelectorAll('.filter-pill').forEach(btn => {
         btn.addEventListener('click', function (e) {
           e.stopPropagation();
           const key = this.getAttribute('data-key');
           if (isMobileFilterLayout()) {
+            openMobileFilterSheet(key);
+          } else {
+            toggleDesktopPanel(key);
+          }
+        });
+        // icon 區域單獨處理：active 狀態下顯示清除 icon,點擊只清除該類別篩選,不觸發展開選單
+        btn.querySelector('.pill-icon').addEventListener('click', function (e) {
+          e.stopPropagation();
+          const key = btn.getAttribute('data-key');
+          if (btn.classList.contains('active')) {
+            clearFilterKey(key);
+          } else if (isMobileFilterLayout()) {
             openMobileFilterSheet(key);
           } else {
             toggleDesktopPanel(key);
@@ -1763,24 +1885,40 @@
       });
     }
 
-    function clearAllFilters() {
-      const hadAnyFilter = FILTER_CONFIG.some(cfg => filterState[cfg.key].length > 0);
-      FILTER_CONFIG.forEach(cfg => { filterState[cfg.key] = []; });
-      document.querySelectorAll('.filter-option.selected').forEach(btn => btn.classList.remove('selected'));
-      closeDesktopPanels(true);
-      closeMobileFilterSheet(true);
+    function clearFilterKey(key) {
+      const cfg = FILTER_CONFIG.find(c => c.key === key);
+      const hadFilter = filterState[key].length > 0;
+      filterState[key] = [];
+
+      // 重新渲染桌面下拉面板的選中狀態
+      const panelOptions = document.querySelector(`.filter-panel[data-panel="${key}"] .filter-panel-options`);
+      if (panelOptions) {
+        renderOptionsInto(panelOptions, cfg);
+        fitPanelWidth(panelOptions.closest('.filter-panel'));
+      }
+
+      // 若手機 bottom sheet 正顯示同一個類別，也一併更新
+      const sheet = document.getElementById('filterSheet');
+      if (sheet.dataset.key === key) {
+        const sheetOptionsEl = document.getElementById('filterSheetOptions');
+        renderOptionsInto(sheetOptionsEl, cfg);
+        if (key === 'type') sheetOptionsEl.style.width = '';
+        else fitOptionsWidth(sheetOptionsEl);
+      }
+
       refreshPillStates();
       applyFilters();
 
       // GA: filter_clear
-      if (hadAnyFilter) {
-        gtag('event', 'filter_clear', { device: getDeviceType() });
+      if (hadFilter) {
+        gtag('event', 'filter_clear', { filter_type: key, device: getDeviceType() });
       }
     }
 
     function toggleDesktopPanel(key) {
       const alreadyOpen = openPanelKey === key;
       closeDesktopPanels();
+      closeDesktopSortPanel();
       if (alreadyOpen) return;
       const panel = document.querySelector(`.filter-panel[data-panel="${key}"]`);
       const pill = document.querySelector(`.filter-pill[data-key="${key}"]`);
