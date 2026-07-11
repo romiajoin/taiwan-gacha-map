@@ -771,6 +771,7 @@
       .header-right .header-divider { display: none; }
       .logo { flex: 1; min-width: 0; }
       .logo h1 { font-size: 16px; }
+      #gridView { padding: 12px 20px 20px; }
       .toolbar { padding: 12px 20px 12px 20px; }
       .search-box { width: 100%; flex-shrink: 1; }
       .search-box-desktop { display: none; }
@@ -782,35 +783,14 @@
       .sort-group { flex-shrink: 0; margin-left: 16px; margin-right: 0px; }
       .last-updated-list-row {
         display: flex; align-items: center; justify-content: center;
-        gap: 8px; padding-bottom: 20px;
+        gap: 8px; padding-bottom: 12px;
         font-family: 'Space Mono', monospace;
         font-size: 12px; font-weight: 400; color: var(--fill-black);
       }
       body.map-view .last-updated-list-row { display: none; }
       .last-updated-list-row .report-link { font-size: 12px; }
-    }
 
-    /* ===== Mobile ===== */
-    @media (max-width: 640px) {
-      header { padding: 20px; justify-content: flex-start; gap: 16px; }
-      .header-info { display: none; }
-      .header-right .report-link,
-      .header-right .header-divider { display: none; }
-      .logo { flex: 1; min-width: 0; }
-      .logo h1 { font-size: 16px; }
-      .view-btn { padding: 8px 16px; }
-      .view-btn .label { display: none; }
-      #gridView { padding: 12px 20px 20px; }
-      .grid { grid-template-columns: 1fr; gap: 20px; }
-      .toolbar { padding: 12px 20px 12px 20px; }
-      .search-box { width: 100%; flex-shrink: 1; }
-      .search-box-desktop { display: none; }
-      .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
-      .search-box-mobile input { font-size: 16px; }
-
-      /* 地圖模式：搜尋框跟地點數維持跟列表模式一樣，共用同一個 .toolbar，不再另外藏起來 */
-
-      /* 地圖模式：bottom sheet */
+      /* 地圖模式：bottom sheet（跟 isMobileMapLayout() 統一用同一條 768px 分界線） */
       #mapView {
         flex-direction: column;
         position: relative;
@@ -1388,11 +1368,11 @@
       if (el) el.classList.add('selected');
     }
 
-    // 判斷目前是不是走 mobile 地圖版型：跟 CSS 的 640px 斷點對齊，
+    // 判斷目前是不是走 mobile 地圖版型：跟篩選器的 isMobileFilterLayout() 統一用同一條 768px 分界線，
     // 跟 getDeviceType()（用 pointer:coarse 判斷、給 GA 用）分開，
     // 避免「觸控筆電＋寬螢幕」這種邊界情況兩邊判斷對不上。
     function isMobileMapLayout() {
-      return window.matchMedia('(max-width: 640px)').matches;
+      return window.matchMedia('(max-width: 768px)').matches;
     }
 
     // =============================================
@@ -1539,9 +1519,13 @@
         const card = document.createElement('div');
         card.className = 'loc-card-grid';
         card.dataset.machineId = loc.id;
+        const endingBadge = getEndingBadge(loc.limited);
         card.innerHTML = `
           <div class="card-top">
+            <div class="card-badge-row">
             <div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>
+            ${endingBadge ? `<div class="ending-badge">${endingBadge}</div>` : ''}
+            </div>
             <div class="card-name">${loc.name}</div>
             ${loc.limited ? `<div class="card-limited">期間限定：${loc.limited}</div>` : ''}
             <div class="card-tags">
