@@ -59,6 +59,7 @@
       --fill-blue:     #0066FF;
       --fill-orange:   #EA580C; 
       --fill-green:    #16A34A;
+      --fill-red:      #DC2626;
       --fill-black:    #000000;
       --fill-white:    #FFFFFF;
       --fill-gray:     #3C3C43;
@@ -446,14 +447,19 @@
     .type-badge.gacha { background: var(--fill-white); border: 1px solid var(--fill-orange); color: var(--fill-orange); }
     .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
 
-    @media (max-width: 640px) {
-      .filter-bar { padding: 4px 20px 12px 20px; gap: 0; }
-      .filter-scroll { overflow-x: auto; gap: 12px; flex: 1; min-width: 0; }
-      .filter-scroll::-webkit-scrollbar { display: none; }
-      .sort-group { flex-shrink: 0; margin-left: 16px; margin-right: 0px; }
+    /* 卡片頂部：type-badge 靠左、倒數 badge 靠右同一列 */
+    .card-badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* 倒數 badge（即將結束，3 天內）— 樣式待與 Figma 對齊 */
+    .ending-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+      font-size: 12px; font-weight: 500;
+      padding: 4px 8px; border-radius: 8px;
+      background: #FFCF48; color: var(--fill-black);
+      white-space: nowrap;
     }
 
-    /* ===== Content ===== */
+
     .content { flex: 1; overflow: hidden; display: flex; }
 
     /* ===== Grid View ===== */
@@ -1577,6 +1583,21 @@
       if (!limited) return null; // null 代表無期限（常態機）
       const p = limited.split('～');
       return new Date(p[p.length - 1].trim().replace(/\//g, '-'));
+    }
+
+    // 即將結束 badge：只在 URGENT_DAYS 天內顯示（把今天算進去 → 今天結束＝剩 1 天＝「最後一天」）
+    const URGENT_DAYS = 3; // 幾天內才顯示 badge，之後要調就改這裡
+    function getEndingBadge(limited) {
+      const end = getEndDate(limited);
+      if (!end) return null;                       // 常態機、無結束日 → 不顯示
+      const now = new Date();
+      const endD = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      const nowD = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const diffDays = Math.round((endD - nowD) / 86400000); // 只比日期，不看時分
+      if (diffDays < 0) return null;               // 已結束
+      if (diffDays >= URGENT_DAYS) return null;     // 超過 3 天不顯示
+      const remaining = diffDays + 1;              // 今天結束 = 剩 1 天
+      return remaining === 1 ? '最後一天' : `倒數 ${remaining} 天`;
     }
 
     function haversineKm(lat1, lng1, lat2, lng2) {
