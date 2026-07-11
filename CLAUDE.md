@@ -116,7 +116,7 @@ Token 只顯示一次，外洩需立即到 GitHub Settings 撤銷並重新產生
 - `filterState = { type: [], city: [], ip: [] }`，每個維度都是多選陣列，`applyFilters()` 用「每個維度都符合（陣列為空視為不限制）」做 AND，維度內部是 OR
 - **桌面版**：pill 點擊展開錨定 popover（`.filter-panel`，`position: absolute`），選項即時套用、不需確認按鈕
 - **手機版**：改用共用的 bottom sheet（`#filterSheet`），依 `data-key` 動態填入對應類別的選項，不是每個類別各自一個 sheet DOM
-- 清除篩選：桌面版用 `margin-left` 接在最後一個 pill 右側（非 `margin-left: auto` 頂到最右）；手機版拆成 `.filter-scroll`（pill 可橫向捲動）+ 不隨捲動的清除連結
+- 清除篩選：v22 起改為單一 pill 各自清除——選取後 pill 右側 icon 從 chevron 換成清除（X）icon，`clearFilterKey(key)` 只清除該類別，不再有全域「清除篩選」按鈕/`clearAllFilters()`
 
 **⚠️ flex-wrap 容器量不出「換行後的實際寬度」**
 `width: fit-content` 或 `width: max-content` 搭配 `flex-wrap: wrap` 時，瀏覽器算「內容自然寬度」是**假裝不換行**去加總所有子元素寬度的（CSS 規格如此，不是 bug），結果通常遠超過 `max-width`，導致容器永遠卡滿上限，看不出換行後實際只用到多少寬度。無法只用 CSS 解決，做法是量測後用 JS 手動設定 `width`：
@@ -140,9 +140,19 @@ function fitOptionsWidth(container) {
 ```
 量測時機也要注意：目標元素必須是**已經 `display: block`（看得見）** 才量得到正確的 `offsetTop`/`offsetWidth`，量 `display: none` 的元素全部都是 0。桌面面板預設隱藏，量測前要先暫時強制 `display: block`、量完再切回去（見 `fitPanelWidth()`）；手機 sheet 則是先加上 `.show` class 讓它顯示、才呼叫量測函式，順序顛倒就會量到 0。
 
-**面板/sheet 疊層順序**：手機版篩選 sheet 的 `z-index`（1100/1101）要蓋過地圖模式 sidebar，否則地圖模式下打開篩選會被 sidebar 蓋住。⚠️ v20 把 mobile `.sidebar` 的 `z-index` 從 1000 提高到 2000（為了蓋過 Leaflet 內建控制項，見上方「地圖 Marker 設計」），篩選 sheet 的 1100/1101 現在已經比 sidebar 低了，理論上應該也要一起往上調，目前還沒處理，之後兩邊同時開啟時遇到疊層問題要往這裡查。
+**面板/sheet 疊層順序（v22 修正）**：手機版篩選/排序 sheet 原本 `z-index` 是 1100/1101，v20 把 mobile `.sidebar` 的 `z-index` 從 1000 提高到 2000（為了蓋過 Leaflet 內建控制項）之後，沒有同步調整篩選 sheet，導致地圖模式下打開篩選/排序會被 sidebar 蓋住——這個問題留在 code 裡整整兩個版本才發現。v22 把 `.filter-sheet-overlay`/`.filter-sheet`（篩選跟排序共用這組 class）的 `z-index` 提高到 2200/2201，蓋過 sidebar 也蓋過 A2HS banner（2100），確認排序/篩選是使用者當下主動觸發的 modal 互動，理論上該蓋過被動顯示的 banner。之後再新增任何 fixed 定位、疊在畫面上的 UI，記得先看這個檔案裡目前所有 `z-index` 的值，不要重複踩到同一個坑。
 
 **IP 排序提示文字（v20）**：IP 選項用 `localeCompare(a, b, 'zh-Hant')` 排序，實測對中英數混合資料的結果是「數字開頭 → 中文依首字筆畫遞增 → 英文開頭殿後」（不是隨機或照輸入順序，只是肉眼不容易看出規律）。與其重新設計排序邏輯或加搜尋框（评估過覺得現階段太早），改成在 IP 篩選面板上方加一句提示文字說明排序規則：「依「數字 → 筆畫 → 英文」排序，可滑動尋找」。桌面版 popover（`.filter-panel`）跟手機版 bottom sheet（`#filterSheet`，透過 `#filterSheetHint`）是兩套獨立 DOM，這句提示要兩邊各自補一次，不會共用。
+
+### 排序系統（Sort，v22 新增）
+- 位於篩選 pill 列右側（`margin-left: 4px`，疊加 `.filter-bar` 原有的 `gap: 12px` 湊出 16px 間距），純文字＋chevron 樣式，跟 pill 外觀刻意做出區隔——排序永遠單選、沒有清除的概念，跟篩選的多選/可清除是不同的心智模型，用同一種 pill 樣式容易誤導使用者以為排序也能疊加
+- `SORT_OPTIONS` 固定三個選項：`end_date_asc`（default）、`distance_asc`、`distance_desc`；桌面版 `#sortPanel` dropdown、手機版共用 `.filter-sheet` 這組 bottom sheet DOM（跟篩選共用同一套元件與 class，`#sortSheetOverlay`/`#sortSheet`），兩者互斥——開排序會收篩選，開篩選會收排序，`toggleDesktopSortPanel()`/`toggleDesktopPanel()` 跟 `openMobileSortSheet()`/`openMobileFilterSheet()` 互相呼叫對方的 close function
+- `sortLocations(arr)`：
+  - `end_date_asc`：沿用 `limited` 欄位（`"2026/07/01～2026/07/20"` 格式，取「～」後半段當結束日）比較，**無期限的常態機一律排最後**，彼此之間用 IP 名稱（`character` 欄位）`localeCompare('zh-Hant')` 排序（跟篩選 IP 選項同一套規則）——舊版曾經用 `getEnd()` 回傳固定 `9999/12/31` 當佔位值，這個寫法「近到遠」時剛好把無期限排最後，但如果曾經想加「遠到近」方向，同一個佔位值會讓無期限機台變成排最前面，邏輯是巧合對、不是設計對，v22 改成明確判斷 `null` 才是對的做法
+  - `distance_asc`/`distance_desc`：Haversine 公式算直線距離（台灣範圍不需要更複雜的橢球模型），需要 `userCoords`（使用者座標）才能排，沒有座標時直接回傳原陣列不排序（防呆，理論上選這個選項前一定已經觸發過定位流程）
+- **定位權限流程**：`requestUserLocation()` 包一層 Promise 呼叫 `navigator.geolocation.getCurrentPosition()`，`enableHighAccuracy: false`（找機台這種場景不需要，換取更快定位）、`maximumAge: 300000`（5 分鐘內快取位置可重用）；已知拒絕過的狀態存 `localStorage`（key: `geo_permission_denied`），下次點擊直接跳過 API 呼叫（因為 iOS Safari 拒絕過就不會再跳權限視窗，重複呼叫也沒用）
+- **提示文案拆四種**（`GEO_ERROR_MESSAGES`），對應 `err.status`：已知拒絕過（本地判斷，不呼叫 API）／`denied`（本次拒絕）／`timeout`（逾時）／`unavailable`（裝置不支援或瀏覽器不支援 geolocation）——刻意不合併成一句「請確認定位權限」，因為逾時跟裝置不支援跟權限完全無關，合併文案會誤導使用者去翻手機設定
+- 提示文字（`showSortHint()`）顯示位置：桌面 `#sortPanelHint`（dropdown 內、選項上方）、手機 `#sortSheetHint`（bottom sheet 內、選項上方），選單保持開啟不會自動收合，讓使用者看得到提示
 
 ### 裝置類型判斷：排版 vs 分析用途要分開
 - `isMobileFilterLayout()`：`matchMedia('(max-width: 768px)')`，純粹決定「篩選要顯示 dropdown 還是 bottom sheet」，跟裝置無關，縮小桌面視窗也會觸發 mobile 排版（這是刻意的，排版本來就該跟著視窗寬度走）
@@ -199,13 +209,22 @@ function fitOptionsWidth(container) {
 
 **平板版型**：`@media (min-width: 768px)` 固定寬度 `400px`、水平置中（`left: 50%; transform: translateX(-50%)`）、`bottom: 12px`；Android 平板不用額外判斷 UA（本來就含 `android` 字樣會觸發），iPad 因為 iPadOS 13+ 預設偽裝成 Mac UA，`isIos` 判斷抓不到，維持現狀不特別處理（等於 iPad 目前不會顯示這個 banner）
 
+### Service Worker 快取版本管理（v22 修正）
+- **根因**：`CACHE_VERSION` 從 v21 引入 SW 之後一直卡在 `'v1'`，從未跟著 release 更新過。SW 的清快取邏輯是「版本號改變時，`activate` 才會清掉舊的 cache」，版本號沒動，`SHELL_CACHE` 裡的 `index.html` 等殼層資源就一直是第一次快取時的舊版本，改版後使用者要手動清瀏覽記錄才看得到最新內容
+- **疊加問題**：`sw.js` 本身沒有設定 no-cache header，可能被瀏覽器一般 HTTP cache 卡住，導致連「偵測 SW 檔案內容是否變化」這個瀏覽器內建機制都沒被觸發
+- **修法**：
+  1. `CACHE_VERSION` 改成對齊 release 版號（目前 `'v22'`），之後每次 release 只要動到 `SHELL_ASSETS` 清單裡的檔案（`index.html`、`manifest.json`、`favicon.svg`，或更新 Leaflet CDN 版本號）就要同步 bump，維持整數格式（`v23`、`v24`...），不用語意化版本
+  2. 新增 `vercel.json`，對 `/sw.js`、`/`、`/index.html` 都設 `Cache-Control: no-cache, no-store, must-revalidate`，確保瀏覽器每次都重新抓這幾個檔案去比對，不會被一般 HTTP cache 擋掉 SW 的更新偵測
+  3. 因為 `sw.js` 本身已經 no-cache，之後只調整 `fetch` handler 內部邏輯（不影響 `SHELL_ASSETS` 清單）而不動 `CACHE_VERSION` 也沒關係——瀏覽器會自己偵測到 `sw.js` 檔案 byte 不同、觸發新版安裝
+- 純資料更新（Google Sheet 內容變動）不受影響，本來就是走 `DATA_CACHE` 的 network-first
+
 ### Icon 系統
 - 全站使用 Material Symbols inline SVG（從 Google Fonts 下載 SVG 檔，`fill="#000000"` 改為 `fill="currentColor"`）
 - Type badge 使用 FILL1 版本（實心）
 - Filter pill 的展開/收合用同一顆 `arrow_drop_down` icon + CSS `transform: rotate(180deg)` 切換，不是切換兩顆 icon（v18 以前的 filter chip 用兩顆 icon 切換 active 狀態，v19 改版後已不適用）
 - 彈窗（地圖 popup / grid modal）資訊欄不使用 icon，純文字標籤
 
-### GA4 自訂事件（v19 起，v21 新增 PWA / 加到主畫面相關事件）
+### GA4 自訂事件（v19 起，v21 新增 PWA / 加到主畫面相關事件，v22 新增排序/定位相關事件）
 | 事件名稱 | 觸發時機 | 參數 |
 |---|---|---|
 | `search_box_focus` | 點擊搜尋框（三個 input 各自觸發） | `source`（desktop_toolbar/mobile_toolbar/map） |
@@ -213,7 +232,7 @@ function fitOptionsWidth(container) {
 | `filter_click` | 點擊篩選面板/sheet 裡的選項 | `filter_type`, `filter_value`, `filter_state`(on/off), `device` |
 | `filter_panel_open` | 打開篩選 pill 的面板或 bottom sheet | `filter_type`, `device` |
 | `filter_panel_close` | 使用者主動關閉面板/sheet（程式自動觸發的收合不算，見下方保護機制） | `filter_type`, `had_selection`, `device` |
-| `filter_clear` | 點擊「清除篩選」且當下有套用中的篩選 | `device` |
+| `filter_clear` | 點擊篩選 pill 上的清除（X）icon，且該類別當下有套用中的篩選（v22 起從全域「清除篩選」按鈕改為單一 pill 各自清除，`clearFilterKey(key)`） | `filter_type`, `device` |
 | `filter_result` | `applyFilters()` 執行後（debounce 800ms，僅在有套用篩選時記錄） | `type`, `city`, `ip`（各自 join 成字串）, `result_count`, `device` |
 | `view_toggle` | 切換列表 / 地圖（跳過初始化那次） | `view_mode`, `device` |
 | `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source`(map_list/grid) |
@@ -230,11 +249,14 @@ function fitOptionsWidth(container) {
 | `a2hs_prompt_result`（v21） | Android 原生安裝視窗的使用者選擇 | `outcome`(accepted/dismissed), `platform`(固定 android) |
 | `pwa_installed`（v21） | `appinstalled` 觸發（PWA 安裝完成） | `platform`, `source`(a2hs_banner/native_browser_ui) |
 | `pwa_launch_mode`（v21） | 每次頁面載入判斷 standalone/browser 開啟 | `mode`(standalone/browser) |
+| `sort_change`（v22） | 選擇排序方式並實際套用（距離排序需等定位成功才觸發，選了但定位失敗不算） | `sort_key`(end_date_asc/distance_asc/distance_desc), `device` |
+| `geo_permission_result`（v22） | 距離排序觸發 `navigator.geolocation` 定位請求後取得結果的當下 | `geo_result`(granted/denied/timeout/unavailable), `device` |
 
 **追蹤時的保護機制**（避免程式自動觸發的行為污染數據）：
 - `filter_result` / `filter_clear`：沒有套用任何篩選時不記錄（純搜尋、初始狀態、清除已經是空的都不算）
 - `filter_panel_close`：`clearAllFilters()` 導致的關閉、視窗 `resize` 導致的自動收合，都透過 `skipTracking` 參數明確跳過
 - `sheet_toggle`：只在 `initBottomSheet()` 裡真正的拖拉手勢分支觸發，`openSheet()`/`peekSheet()` function 本體不埋事件（因為切換地圖模式時也會呼叫這兩個 function，若埋在裡面會誤觸發）
+- `geo_permission_result`（v22）：只有實際呼叫 `navigator.geolocation.getCurrentPosition()` 才會觸發。已知拒絕過（`localStorage` 的 `geo_permission_denied`）之後直接顯示提示、不再呼叫 API，這種情況不會產生事件——這代表這個事件反映的是「呼叫嘗試次數」的授權率，不是「不重複使用者」的授權率，兩者會有落差
 - 所有自訂參數（`filter_type`、`source`、`device`、`result_count` 等）要在 GA4 後台「管理 → 自訂定義 → 自訂維度」手動註冊，才能在標準報表/Explore 查詢
 
 **⚠️ `addEventListener` 直接傳函式參照的坑**：`addEventListener('click', someFn)` 會把 `event` 物件當作 `someFn` 的第一個參數傳入。如果 `someFn` 的第一個參數是拿來控制邏輯用的（例如 `skipTracking`），會被 `event` 物件（永遠 truthy）誤判，導致邏輯整個相反卻不會報錯。要嘛改用箭頭函式包一層再傳（`addEventListener('click', () => someFn())`），要嘛該參數不要放在第一位。
@@ -251,6 +273,7 @@ function fitOptionsWidth(container) {
 - API：`GET https://api.counterapi.dev/v1/cardradartw/visits/up`（每次載入 +1）
 - 計數方式：page view（非 unique visitor）
 - API 失敗時 banner 靜默隱藏，不影響其他功能
+- **⚠️ v22 修正：曾被 SW 誤快取導致數字凍結**——`sw.js` 的 `fetch` handler 裡，`isDataRequest`／`isImageRequest` 都判斷不到的請求會全部掉進最後的 catch-all，用 `cacheFirst(request, SHELL_CACHE)` 處理，counter API 也符合這個條件，導致第一次呼叫後就被快取住，之後每次 refresh 都拿到快取的舊回應，人數永遠不會增加。修法是新增 `isNoCacheRequest(url)`，判斷 `url.hostname === 'api.counterapi.dev'`，符合的請求直接 `fetch(request)` 繞過快取，不進 `cacheFirst`
 
 ### Header 順序（PC）
 `最後更新時間 ｜ 回報表單 　[列表][地圖]`

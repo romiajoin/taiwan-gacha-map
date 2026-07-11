@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/07/06（v21）
+**最後更新：** 2026/07/11（v22）
 
 ---
 
@@ -64,6 +64,7 @@
 - 顏色：`--fill-blue`（文字與數字）、`--fill-blue-8`（背景）
 - 資料來源：counterapi.dev（`cardradartw/visits`），page view 計數（每次載入 +1）
 - API 失敗時靜默隱藏，不影響其他功能
+- v22 修正：曾被 Service Worker 誤快取導致數字凍結（`sw.js` catch-all 規則把 counter API 也當成殼層資源快取），改為指定該請求繞過快取、每次都真的打網路，詳見 `CLAUDE.md`
 
 ### Header
 - 右側由左至右：最後更新時間 ｜ 回報表單 　[列表][地圖]
@@ -77,7 +78,7 @@
 | `search` | 輸入關鍵字（debounce 800ms） | `search_term` |
 | `filter_click` | 點擊篩選面板/sheet 裡的選項 | `filter_type`, `filter_value`, `filter_state`, `device` |
 | `filter_panel_open` / `filter_panel_close` | 打開/主動關閉篩選面板或 sheet | `filter_type`, `had_selection`（close 才有）, `device` |
-| `filter_clear` | 清除篩選 | `device` |
+| `filter_clear` | 點擊篩選 pill 上的清除（X）icon，且該類別當下有套用中的篩選（v22 起從全域清除按鈕改為單一 pill 各自清除） | `filter_type`, `device` |
 | `filter_result` | 篩選結果更新（debounce 800ms） | `type`, `city`, `ip`, `result_count`, `device` |
 | `view_toggle` | 切換列表 / 地圖 | `view_mode`, `device` |
 | `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source` |
@@ -94,6 +95,8 @@
 | `a2hs_prompt_result` | Android 原生安裝視窗的使用者選擇（v21） | `outcome`, `platform` |
 | `pwa_installed` | PWA 安裝完成（v21） | `platform`, `source` |
 | `pwa_launch_mode` | 每次載入判斷 standalone/browser 開啟（v21） | `mode` |
+| `sort_change` | 選擇排序方式並實際套用（v22） | `sort_key`, `device` |
+| `geo_permission_result` | 距離排序觸發定位請求後取得結果（v22） | `geo_result`, `device` |
 
 詳細觸發規則與防誤觸機制見 `CLAUDE.md`。
 
@@ -114,7 +117,7 @@
 
 ### PWA / 加到主畫面（A2HS Banner，v21 新增）
 - **manifest.json**：`name`/`short_name`、`theme_color: #0066FF`、`background_color: #F2F2F7`、`display: standalone`；圖示 `icon-192.png`/`icon-512.png`/`icon-maskable-512.png`（maskable 沿用一般版本，logo 本身留白已在安全區內）、另加 `apple-touch-icon.png`
-- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新
+- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`
 - **顯示時機**：累計「查看詳情」次數（grid 詳情 + 地圖單一 marker）達 3 次（跨造訪永久累計，存 `localStorage`），或單次瀏覽停留超過 20 秒，兩者擇一觸發；不依賴瀏覽器自身的 `beforeinstallprompt` 時機判斷或 iOS 固定延遲
 - **平台差異**：Android 按鈕觸發原生安裝流程（仍受限於瀏覽器何時發出 `beforeinstallprompt`）；iOS + Safari 顯示教學文案；iOS + 非 Safari（LINE/IG/FB 內嵌瀏覽器）先引導「用 Safari 開啟」
 - **關閉退避**：關過 3 次永久不再顯示，每次關閉後間隔 14 天才再問一次
@@ -162,12 +165,20 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - **手機版**：改用 bottom sheet（標題「{類別}篩選」+ 右上角關閉鈕），header 固定不隨選項列表捲動；選項區塊整包置中、內部每列靠左對齊
 - 縣市選項固定顯示全部 22 個（`TW_CITY_ORDER` 自訂順序），不受目前資料是否涵蓋該縣市影響；IP、機台類型選項則是動態去重
 - IP 選項上方有一行排序說明：「依「數字 → 筆畫 → 英文」排序，可滑動尋找」（v20 新增，排序邏輯本身沒變，只是補上說明文字）
-- 清除篩選：桌面版位於最後一個 pill 右側（24px 間距）；手機版固定在 pill 列右側，不隨 pill 橫向捲動
+- 篩選 pill 選取後（`.active`）右側 icon 從 chevron 換成清除（X）icon，點擊只清除該 pill 所屬類別的篩選值（v22 起改為單一 pill 各自清除，不再有全域「清除篩選」按鈕）
 - 篩選與搜尋同時作用（交集）
 - 篩選結果為 0 筆時，地圖模式的詳情面板會顯示「找不到符合的地點」（v20 補回，改版時一度遺漏）
 - 類型 Badge 顯示於：列表卡片左上角、詳情 Modal、地圖 Popup（樣式與篩選 UI 無關，維持原本設計）
   - 抽卡機：背景 `#00c2a8`，黑字，`border-radius: 4px`，icon：Material Symbols playing_cards（FILL1）
   - 相卡機：背景 `#ffcf48`，黑字，`border-radius: 4px`，icon：Material Symbols photo_camera（FILL1）
+
+### 排序（v22 新增）
+- 位於篩選 pill 列右側，與 pill 間隔 16px，純文字＋chevron（無 pill 外框），單選
+- **桌面版**：點擊展開錨定 dropdown；**手機版**：文字換行為兩行（類別／方向），點擊開 bottom sheet；兩者互斥，開一個會自動收合另一個以及篩選面板/sheet
+- 三個選項：結束日期近到遠（default）、距離近到遠、距離遠到近
+- **結束日期排序**：有結束日期的機台依日期排序，無期限的常態機一律排最後，彼此之間依 IP 名稱（`localeCompare('zh-Hant')`）排序
+- **距離排序**：Haversine 公式計算直線距離，需先取得使用者定位（`navigator.geolocation`）；已拒絕過的授權狀態存 `localStorage`（`geo_permission_denied`），之後不會再重複觸發瀏覽器權限彈窗，直接顯示提示文字
+- 定位失敗時依原因顯示不同提示：已知拒絕過／本次拒絕／逾時／裝置不支援，四種文案分開，避免使用者誤判問題出在哪
 
 ### 搜尋
 - 搜尋框可搜尋：店名、地址、縣市、IP 角色、場地
@@ -197,7 +208,7 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 ### 手機版地圖模式
 - Toolbar（搜尋框）跟列表模式共用，不再隱藏（v20 起地圖模式也會顯示）
 - Filter bar（機台類型 / 縣市 / IP dropdown pill）顯示於地圖上方，pill 列可橫向捲動，清除篩選固定不隨捲動
-- 篩選面板改為 bottom sheet 呈現，z-index 高於下方的 sidebar bottom sheet（見 `CLAUDE.md` 已知的 z-index 疊層問題）
+- 篩選/排序面板改為 bottom sheet 呈現，`z-index: 2200`/`2201`，蓋過下方的 sidebar bottom sheet（`z-index: 2000`）；v22 修正前兩者疊層順序相反，篩選/排序 sheet 曾被地圖 sidebar 蓋住，見 `CLAUDE.md`
 - 地圖：`flex: 1` 佔滿整個內容區高度
 - 詳情面板（bottom sheet）：`position: fixed; bottom: 0`，疊在地圖上方，`z-index: 2000`（蓋過 Leaflet 內建控制項）
   - **`default` state**（預設，沒選任何地點）：固定矮高度，顯示提示文字
@@ -274,5 +285,6 @@ push 至 GitHub 後 Vercel 自動重新部署，約 1 分鐘生效。
 ## 待開發功能（未來規劃）
 
 - 期間限定快速篩選
+- 距離篩選（例如「5km 內」，v22 討論過先做排序、篩選半徑之後再議）
 - 地點狀態標示（營業中 / 已結束）
 - 自訂網域
