@@ -806,7 +806,6 @@
         left: 0;
         right: 0;
         width: 100%;
-        height: 98px;
         border-right: none;
         border-top: none;
         border-radius: 16px 16px 0 0;
@@ -827,7 +826,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 12px 0px 12px 0px;
+        padding: 16px 0px 16px 0px;
         background: var(--fill-gray-6);
         cursor: grab;
         flex-shrink: 0;
@@ -842,17 +841,11 @@
         border-radius: 2px;
       }
       .sidebar-header { padding: 10px 16px 6px; }
-      .location-list { padding: 0px 20px 00px 20px; }
-      .last-updated-list-row {
-        display: flex; align-items: center; justify-content: center;
-        gap: 8px; padding-bottom: 12px;
-        font-family: 'Space Mono', monospace;
-        font-size: 12px; font-weight: 400; color: var(--fill-black);
-      }
-      body.map-view .last-updated-list-row { display: none; }
-      .last-updated-list-row .report-link { font-size: 12px; }
+      .location-list { padding: 16px 20px 16px 20px; }
       .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }
     }
+
+    /* ===== Mobile ===== */
 
   </style>
 </head>
@@ -1000,6 +993,9 @@
     let map = null;
     let markers = [];
     let markerByLocId = {}; // loc.id -> 該機台所屬的 marker（同座標多機共用一個 marker，供列表點擊時對照用）
+    let lastSelectedLocId = null; // 關閉詳情、回到列表時，捲到「最後」選中那台的卡片位置（會隨切換不斷更新，不是最一開始點的那張）
+    let currentMapData = []; // 目前地圖上繪製的資料集（給側邊欄「預設列表」使用，篩選變動時同步更新）
+    let anyPopupOpen = false; // 目前地圖上是否有任何 cluster popup 開著（手機點地圖空白處要不要收合 sheet 會用到）
     let viewInitialized = false; // 避免初始化時觸發 view_toggle
 
     // =============================================
@@ -1057,7 +1053,6 @@
 
       if (view === 'map') {
         initMap();
-        closeDetailPanel();
         initBottomSheet();
         setTimeout(() => { if (map) map.invalidateSize(); }, 50);
       }
@@ -1081,6 +1076,7 @@
       // 手動 pan-to-fit：Leaflet 原生 autoPan 在 max-height+overflow 下量不準
       // 改在 popupopen 後用 rAF 拿到真實 render 尺寸再算位移
       map.on('popupopen', function(e) {
+        anyPopupOpen = true;
         const container = e.popup.getElement();
         if (!container) return;
         requestAnimationFrame(() => {
@@ -1096,9 +1092,18 @@
         });
       });
 
-      // 桌面版：點地圖空白處收回側邊欄（marker 本身的 click 預設不會冒泡到這裡）
+      // 點地圖空白處收回 sheet／側邊欄：桌機一律收回；手機只有「有東西可以收」（正在看詳情，或有 popup
+      // 開著）才動作，單純瀏覽列表時點地圖空白處不用強制把使用者手動拉開的列表高度收掉。
       map.on('click', () => {
-        if (!isMobileMapLayout()) closeDetailPanel();
+        if (isMobileMapLayout() && !sheetLoc && !anyPopupOpen) return;
+        closeDetailPanel();
+      });
+
+      // popup 被關閉（不管是側欄 X 觸發的、還是使用者直接再點一次同一個聚合 marker 讓 Leaflet 原生切換關閉）
+      // 都順便把側欄／sheet 收回列表，避免「popup 已經關了，畫面卻還停在剛剛那台的詳情」這種不同步的狀態。
+      map.on('popupclose', () => {
+        anyPopupOpen = false;
+        closeDetailPanel();
       });
 
       renderMapLocations(currentFiltered.length ? currentFiltered : allLocations);
@@ -1122,13 +1127,10 @@
       markers.forEach(m => map.removeLayer(m));
       markers = [];
       markerByLocId = {};
-      closeDetailPanel(); // 資料重新渲染（例如篩選條件變了）時，先收掉舊的側邊欄/sheet，避免內容跟新資料兜不起來
+      currentMapData = data;
+      closeDetailPanel(true); // 資料重新渲染（例如篩選條件變了）時，先收掉舊的側邊欄/sheet，無條件回 peek，改顯示新的預設列表／空狀態，避免內容跟新資料兜不起來
 
-      if (data.length === 0) {
-        // 篩選結果是 0 筆時，蓋掉 closeDetailPanel 剛設定的預設提示文字，改顯示明確的空狀態
-        document.getElementById('locationList').innerHTML = '<div class="sidebar-placeholder">找不到符合的地點 இдஇ</div>';
-        return;
-      }
+      if (data.length === 0) return; // closeDetailPanel → renderDesktopDefaultPanel 已經處理了「找不到符合的地點」的空狀態
 
       // 依經緯度分組：同一地點（同一商場）常常有好幾台機器共用同一組座標
       const groups = {};
@@ -1171,8 +1173,16 @@
               map.closePopup();
               openDesktopSidebar(locs[0]);
             }
+          } else if (isMobileMapLayout()) {
+            // 聚合點：popup 開合交給 Leaflet 原生 click-toggle 處理，這裡只負責把 sheet 收回 peek+列表，
+            // 讓地圖空間空出來顯示 popup（桌機不用做這件事，因為側欄本來就不會蓋住地圖）。
+            // 如果這次點擊其實是原生關閉 popup，popupclose 監聽器已經先做過同樣的事，這裡等於是無害的重複。
+            // 不動 sheetReturnLevel：這裡只是暫時收合去露出選單，不是真正的「關閉」，
+            // 如果最一開始是從列表點進來的，這筆記憶要留到使用者真的關閉時才用得到。
+            sheetLoc = null;
+            document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
+            applySheetLevel('peek');
           }
-          // locs.length > 1（cluster）完全交給 Leaflet 內建的 click-toggle 行為處理，這裡不用再做事
         });
       });
     }
@@ -1287,7 +1297,10 @@
         el.querySelectorAll('.cluster-popup-item').forEach(btn => {
           if (btn.dataset.bound) return; // 避免同一顆按鈕重複綁定
           btn.dataset.bound = '1';
-          btn.addEventListener('click', () => {
+          btn.addEventListener('click', (e) => {
+            // 擋掉冒泡：這個 click 若冒泡到地圖本身，會被「點地圖空白處收起側欄」那個監聽器接住，
+            // 導致這裡剛設定好的詳情內容馬上被 closeDetailPanel() 蓋回列表 / 提示文字。
+            e.stopPropagation();
             const loc = locs.find(l => String(l.id) === btn.dataset.locId);
             if (!loc) return;
             gtag('event', 'card_click', { machine_id: loc.id, machine_name: loc.name, machine_type: loc.type, source: 'map_cluster_popup' });
@@ -1306,58 +1319,252 @@
     function openDesktopSidebar(loc) {
       document.getElementById('locationList').innerHTML = buildDetailContentHtml(loc, { compact: false });
       highlightMarker(loc);
+      focusMapOnLocation(loc);
+      lastSelectedLocId = loc.id;
       if (map) setTimeout(() => map.invalidateSize(), 0);
     }
 
-    // ---- Mobile：bottom sheet（兩段：摘要卡 / 完整詳情；預設是小 peek + 提示文字，不是真的「無 sheet」）----
-    let sheetLevel = 'default';  // 'default' | 'summary' | 'full'
-    let sheetLoc = null;         // 目前顯示摘要／完整詳情的那一筆
+    // ---- 平移地圖到選中的機台（不論從側欄列表或從 marker 選取，統一走這裡）----
+    // 縮放層級太小（看不清街廓）才會放大；使用者已手動調到夠近的層級就保留原樣，不搶著幫他改。
+    // 是聚合點（同座標多台）的話，額外打開它的 cluster popup，並把清單裡對應那一項標成選中樣式。
+    const FOCUS_MIN_ZOOM = 15;
+    function focusMapOnLocation(loc) {
+      if (!map) return;
+      const marker = markerByLocId[loc.id];
+      if (!marker) return;
+
+      const targetZoom = map.getZoom() < FOCUS_MIN_ZOOM ? FOCUS_MIN_ZOOM + 1 : map.getZoom();
+      map.setView(marker.getLatLng(), targetZoom, { animate: true, duration: 0.4 });
+
+      const locs = marker.__locs || [];
+      if (locs.length > 1) {
+        const popup = marker.getPopup();
+        // 只有在 popup 還沒開的時候才呼叫 openPopup()：對已開啟的 popup 再開一次，
+        // Leaflet 會把內容重新產生（按鈕變成全新 DOM 節點），導致其他項目原本綁好的點擊事件失效。
+        if (popup && !popup.isOpen()) {
+          marker.openPopup();
+        }
+        const popupEl = popup && popup.getElement();
+        if (popupEl) {
+          let selectedBtn = null;
+          popupEl.querySelectorAll('.cluster-popup-item').forEach(btn => {
+            const isSelected = btn.dataset.locId === String(loc.id);
+            btn.classList.toggle('selected', isSelected);
+            if (isSelected) selectedBtn = btn;
+          });
+          // popup 清單本身有獨立捲軸（.cluster-popup-list），選中項若在下方會被擋住看不到，
+          // 捲進來讓使用者不用自己往下滑確認選到哪一項。
+          if (selectedBtn) selectedBtn.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }
+
+    // ---- Mobile：bottom sheet（peek／mid／full 三檔，列表跟詳情共用同一套）----
+    let sheetLevel = 'peek';        // 'peek' | 'mid' | 'full' | 'content'（content 專屬給撐不滿 mid 的短內容詳情用）
+    let sheetLoc = null;            // 目前顯示詳情的那一筆；null 代表顯示列表
+    let sheetReturnLevel = null;    // 從 sheet 列表點卡片進入詳情時，記住當時的層級，關閉時要回去；
+                                     // 其餘入口（marker／popup／點地圖空白處／篩選改變）不設定，關閉一律回 peek
+    let prevSearchKw = '';          // 上一次的搜尋關鍵字，用來偵測「從無到有」／「從有到無」這兩個轉折
+    let sheetLevelBeforeSearch = null; // 搜尋開始那一刻，sheet 原本停在哪一層；清空搜尋時要還原成這個值，
+                                        // 而不是看清空當下 sheet 剛好停在哪（那可能是搜尋自己展開的 mid，不是使用者手動拉的）
+    let sheetContentMaxHeight = null; // 詳情內容撐不滿 mid 時，記住內容實際高度；這種情況下拖曳最高只能拉到這裡，
+                                       // 不是拉到 full（內容就這麼多，拉更高只會多出空白，沒有意義）
 
     function sheetLevelsStack() {
-      // 沒選中任何地點時（預設提示文字），handle 一樣可以拖，只是拖上去內容還是提示文字；
-      // 選了地點之後才是 summary/full 兩層完整內容
-      return sheetLoc ? ['summary', 'full'] : ['default', 'full'];
+      // 短內容的詳情（撐不滿 mid）：只有 peek／content 兩檔，拖到底就是內容實際高度，不會拉到 full 空出一片。
+      // 列表瀏覽、或內容本身就撐得滿 mid 的詳情：維持原本 peek／mid／full 三檔。
+      if (sheetLoc && sheetContentMaxHeight != null) {
+        return ['peek', 'content'];
+      }
+      return ['peek', 'mid', 'full'];
     }
 
     function applySheetLevel(level) {
       sheetLevel = level;
       const sidebar = document.querySelector('.sidebar');
       sidebar.style.height = levelHeightPx(level) + 'px';
-
-      if (!sheetLoc) {
-        document.getElementById('locationList').innerHTML = `<div class="sidebar-placeholder">點選地圖上的圖示，查看機台詳細資訊</div>`;
-      } else {
-        // summary／full 都是完整內容，差別只在 sheet 高度：
-        // summary 高度矮，視覺上只露出 badge + 標題，往上拖同一份內容就會露出剩下的部分
-        document.getElementById('locationList').innerHTML = buildDetailContentHtml(sheetLoc, { compact: false });
-      }
-
+      renderMobileSheetContent();
       if (map) setTimeout(() => map.invalidateSize(), 320);
     }
 
-    function openMobileSheetSummary(loc) {
-      sheetLoc = loc;
-      highlightMarker(loc);
-      applySheetLevel('summary');
-    }
-
-    // ---- 共用：關閉 sheet／清空側邊欄詳情，回到「預設」狀態（兩邊平台文案一致）----
-    // Mobile：sheet 收回小 peek，顯示提示文字。Desktop：側邊欄固定常駐，只是內容換回提示文字。
-    function closeDetailPanel() {
-      sheetLoc = null;
-      document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
-      if (isMobileMapLayout()) {
-        applySheetLevel('default');
-      } else {
-        renderDesktopPlaceholder();
-      }
-      if (map) setTimeout(() => map.invalidateSize(), 320);
-    }
-
-    function renderDesktopPlaceholder() {
+    // ---- 依 sheetLoc 決定 sheet 裡現在該顯示列表還是詳情內容（純內容渲染，不動高度）----
+    function renderMobileSheetContent() {
       const list = document.getElementById('locationList');
       if (!list) return;
-      list.innerHTML = `<div class="sidebar-placeholder">點選地圖上的圖示，查看機台詳細資訊</div>`;
+      if (!sheetLoc) {
+        if (!currentMapData.length) {
+          list.innerHTML = '<div class="sidebar-placeholder">找不到符合的地點 இдஇ</div>';
+          return;
+        }
+        list.innerHTML = currentMapData.map(loc => buildSidebarListCardHtml(loc)).join('');
+        bindSidebarListCardEvents(list);
+        restoreListScrollPosition(list);
+      } else {
+        list.innerHTML = buildDetailContentHtml(sheetLoc, { compact: false });
+      }
+    }
+
+    function openMobileSheetSummary(loc, opts) {
+      if (opts && opts.fromListLevel) {
+        sheetReturnLevel = opts.fromListLevel;
+      }
+      // 其餘入口（marker／popup）不動 sheetReturnLevel：有記憶就留著（代表最一開始是從列表
+      // 進來的，之後不管在 popup 裡切換幾次機台，都要記得關閉時回到那個列表高度）；
+      // 沒有記憶就維持 null（代表這趟純粹從 marker/popup 開始，關閉回 peek）。
+      sheetLoc = loc;
+      highlightMarker(loc);
+      lastSelectedLocId = loc.id;
+      focusMapOnLocation(loc);
+      applyMobileDetailHeight();
+    }
+
+    // ---- 詳情開啟時的高度：內容撐不滿 mid（裝置高 0.32）就縮到內容實際高度，不留空白，
+    // 這種情況拖曳最高也只能到這個高度（sheetContentMaxHeight），不會拉到 full；
+    // 撐得滿或更高就開在 mid，可再手動拖到 full 捲動看完 ----
+    function applyMobileDetailHeight() {
+      const sidebar = document.querySelector('.sidebar');
+      const list = document.getElementById('locationList');
+      const scrollWrapper = document.querySelector('.map-scroll-wrapper');
+      if (!sidebar || !list) return;
+      renderMobileSheetContent();
+      // 切換到新的詳情內容，內部捲動位置要回到最上面，不要沿用上一筆看到一半的位置。
+      if (scrollWrapper) scrollWrapper.scrollTop = 0;
+      sidebar.style.transition = 'none';
+
+      const measureAndApplyHeight = () => {
+        // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成）；
+        // 用兩層 rAF 確保量到的是排版後的真實高度，避免量到還沒定案的中間值。
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const handle = document.querySelector('.sheet-handle');
+            const handleH = handle ? handle.getBoundingClientRect().height : 0;
+            const mid = levelHeightPx('mid');
+            const contentH = list.scrollHeight + handleH;
+            if (contentH < mid) {
+              sheetContentMaxHeight = contentH; // 記住這個高度，拖曳層級（sheetLevelsStack）會用它當拖到底的上限
+              sheetLevel = 'content';
+              sidebar.style.height = contentH + 'px';
+            } else {
+              sheetContentMaxHeight = null; // 內容夠高，維持一般的 mid/full 兩檔可拖
+              sheetLevel = 'mid';
+              sidebar.style.height = mid + 'px';
+            }
+            requestAnimationFrame(() => { sidebar.style.transition = ''; });
+          });
+        });
+      };
+
+      // 詳情內容可能含圖片；圖片載入前 <img> 沒有預留高度，會塌陷成 0，導致這裡提早量到的 contentH
+      // 被低估，誤判成「內容不夠長」而鎖進 content 模式（拖曳上限=量到的矮高度）。
+      // 這正是「第一次點開長內容詳情時無法往上拖，第二次點（圖片已快取）才正常」的成因，
+      // 所以要等內容裡的圖片都載入（或失敗）完，才進行高度量測與定檔。
+      const imgs = Array.from(list.querySelectorAll('img'));
+      const pending = imgs.filter(img => !img.complete);
+      if (pending.length === 0) {
+        measureAndApplyHeight();
+      } else {
+        let remaining = pending.length;
+        const onSettle = () => { remaining--; if (remaining <= 0) measureAndApplyHeight(); };
+        pending.forEach(img => {
+          img.addEventListener('load', onSettle, { once: true });
+          img.addEventListener('error', onSettle, { once: true });
+        });
+        // 安全網：萬一圖片遲遲不觸發 load/error（極少見），最多等 800ms 就照目前狀態量測，
+        // 避免 sheet 因為某張圖卡住而一直不展開。
+        setTimeout(() => { if (remaining > 0) { remaining = 0; measureAndApplyHeight(); } }, 800);
+      }
+
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+    }
+
+
+    // ---- 共用：關閉 sheet／清空側邊欄詳情，回到列表（兩邊平台文案一致，高度規則不同）----
+    // Desktop：側邊欄固定常駐，只是內容換回列表。
+    // Mobile：從 sheet 列表進入的詳情，關閉後回到選中前那一層；其餘入口一律回 peek；
+    // 篩選／搜尋條件改變時（forcePeek=true）無條件回 peek，不管有沒有記住的列表層級。
+    let closingDetailPanel = false; // 防重入：map.closePopup() 會同步觸發 popupclose，那個監聽器也會呼叫這裡，沒擋住會無限遞迴
+    function closeDetailPanel(forcePeek) {
+      if (closingDetailPanel) return;
+      closingDetailPanel = true;
+      sheetLoc = null;
+      document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
+      if (map) map.closePopup(); // 側欄／sheet 收回時，順便關掉任何還開著的 cluster popup，兩者維持同步
+      if (isMobileMapLayout()) {
+        const targetLevel = forcePeek ? 'peek' : (sheetReturnLevel || 'peek');
+        sheetReturnLevel = null;
+        applySheetLevel(targetLevel);
+      } else {
+        renderDesktopDefaultPanel();
+      }
+      if (map) setTimeout(() => map.invalidateSize(), 320);
+      closingDetailPanel = false;
+    }
+
+    // ---- Desktop 預設狀態：沒有選中任何機台時，側邊欄顯示目前篩選結果的卡片列表 ----
+    // （沒有結果時顯示空狀態文字）。點列表卡片＝點 marker，直接切到該機台的完整詳情。
+    function renderDesktopDefaultPanel() {
+      const list = document.getElementById('locationList');
+      if (!list) return;
+      if (!currentMapData.length) {
+        list.innerHTML = '<div class="sidebar-placeholder">找不到符合的地點 இдஇ</div>';
+        return;
+      }
+      list.innerHTML = currentMapData.map(loc => buildSidebarListCardHtml(loc)).join('');
+      bindSidebarListCardEvents(list);
+      restoreListScrollPosition(list);
+    }
+
+    // ---- 共用：回到列表時，把最後選中的那張卡片捲到畫面上方（不是還原成點擊當下的原始畫面）。
+    // lastSelectedLocId 每次選中都會更新（不管是列表點的、marker 點的、還是在 popup 裡切換到別的 IP），
+    // 所以這裡永遠捲到「最後」選中的那一張，不是最一開始點的那一張。----
+    function restoreListScrollPosition(list) {
+      if (lastSelectedLocId) {
+        const card = list.querySelector(`.loc-card[data-loc-id="${lastSelectedLocId}"]`);
+        if (card) card.scrollIntoView({ block: 'start' });
+        lastSelectedLocId = null;
+      }
+    }
+
+    // ---- 側邊欄列表卡片：只顯示挑選機台需要的最少資訊（badge／名稱／期間／tags），
+    // 詳細內容（地址、圖片、分享...）留給點選後的完整詳情面板，避免列表跟詳情重複 ----
+    function buildSidebarListCardHtml(loc) {
+      const typeBadge = `<div class="type-badge ${loc.type === '相卡機' ? 'photocard' : 'gacha'}">${loc.type === '相卡機' ? '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="M480-264q72 0 120-49t48-119q0-69-48-118.5T480-600q-72 0-120 49.5T312-432q0 70 48 119t120 49Zm0-72q-42 0-69-27t-27-68q0-40 27-68.5t69-28.5q42 0 69 28.5t27 68.5q0 41-27 68t-69 27ZM168-144q-29 0-50.5-21.5T96-216v-432q0-29 21.5-50.5T168-720h120l50-67q11-14 26-21.5t32-7.5h168q17 0 32 7.5t26 21.5l50 67h120q30 0 51 21.5t21 50.5v432q0 29-21 50.5T792-144H168Z"/></svg> 相卡機' : '<svg xmlns="http://www.w3.org/2000/svg" height="16px" viewBox="0 -960 960 960" width="16px" fill="currentColor"><path d="m612-404 31-107q3-11-1-22t-14-18l-93-63q-8-5-16.5-2T508-604l-31 107q-3 11 .5 22t13.5 18l93 63q8 5 17 2t11-12ZM168-222l-30-15q-28-13-38-40t3-55l65-140v250Zm148 78q-31 0-53.5-20.5T240-216v-288l134 360h-58Zm206-4q-31 11-56-1t-36-43L259-660q-11-31 .5-56.5T302-753l294-107q31-11 56 .5t36 42.5l172 472q11 31-.5 56T817-253L522-148Z"/></svg> 抽卡機'}</div>`;
+      const endingBadge = getEndingBadge(loc.limited);
+      return `
+        <div class="loc-card" data-loc-id="${loc.id}">
+          <div class="card-badge-row">
+            ${typeBadge}
+            ${endingBadge ? `<div class="ending-badge">${endingBadge}</div>` : ''}
+          </div>
+          <div class="loc-name">${loc.name}</div>
+          ${loc.limited ? `<div class="loc-limited">期間限定：${loc.limited}</div>` : ''}
+          <div class="loc-tags">
+            ${loc.character ? `<span class="tag">${loc.character}</span>` : ''}
+            ${loc.city ? `<span class="tag">${loc.city}</span>` : ''}
+            ${loc.venue ? `<span class="tag">${loc.venue}</span>` : ''}
+          </div>
+        </div>`;
+    }
+
+    function bindSidebarListCardEvents(container) {
+      container.querySelectorAll('.loc-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const loc = currentMapData.find(l => String(l.id) === card.dataset.locId);
+          if (!loc) return;
+          gtag('event', 'card_click', {
+            machine_id: loc.id,
+            machine_name: loc.name,
+            machine_type: loc.type,
+            source: 'map_sidebar_list',
+          });
+          window.a2hsRecordCardView && window.a2hsRecordCardView();
+          if (isMobileMapLayout()) {
+            openMobileSheetSummary(loc, { fromListLevel: sheetLevel });
+          } else {
+            openDesktopSidebar(loc);
+          }
+        });
+      });
     }
 
     function highlightMarker(loc) {
@@ -1628,6 +1835,20 @@
 
     function applyFilters() {
       const kw = (document.getElementById('searchInput').value || '').trim().toLowerCase();
+
+      // 偵測搜尋關鍵字「從無到有」／「從有到無」的轉折：只有這兩個時間點要記住／還原搜尋前的層級，
+      // 中途繼續打字、或機台/IP/縣市那些篩選 pill 變動，都走下面一般的「看這次變動前是哪一層」邏輯。
+      const isMobile = isMobileMapLayout();
+      let clearedSearch = false;
+      if (isMobile) {
+        if (kw && !prevSearchKw) {
+          sheetLevelBeforeSearch = sheetLevel; // 從無到有：記住搜尋開始那一刻原本停在哪一層
+        } else if (!kw && prevSearchKw && sheetLevelBeforeSearch != null) {
+          clearedSearch = true; // 從有到無：等一下要還原成搜尋前那一層，不是看清空當下剛好停在哪
+        }
+      }
+      prevSearchKw = kw;
+
       currentFiltered = allLocations.filter(loc => {
         const matchFilters = FILTER_CONFIG.every(cfg => {
           const selected = filterState[cfg.key];
@@ -1645,7 +1866,23 @@
       currentFiltered = sortLocations(currentFiltered);
       renderGrid(currentFiltered);
       syncCount(currentFiltered.length);
-      if (map) renderMapLocations(currentFiltered);
+      if (map) {
+        const priorLevel = clearedSearch ? sheetLevelBeforeSearch : sheetLevel; // 篩選前使用者原本停留的層級；renderMapLocations 內部會強制收到 peek，這裡要先記住才能決定要不要復原
+        renderMapLocations(currentFiltered);
+        if (isMobile) {
+          if (clearedSearch) {
+            // 清空搜尋：還原成搜尋開始前那一層，不管搜尋期間自己展開到哪
+            applySheetLevel(priorLevel);
+            sheetLevelBeforeSearch = null;
+          } else if (priorLevel === 'peek') {
+            // 原本就在 peek：有結果就展開到 mid 方便直接看，不用自己往上拉；0 筆結果維持 peek（反正只有空狀態文字）
+            if (currentFiltered.length > 0) applySheetLevel('mid');
+          } else {
+            // 原本已經自己拉到 mid／full 在瀏覽：篩選結果變動不去動它，復原回原本那一層
+            applySheetLevel(priorLevel);
+          }
+        }
+      }
       trackFilterResult(currentFiltered.length);
     }
 
@@ -2225,7 +2462,7 @@
       document.getElementById('searchInputMobile').value = '';
       this.style.display = 'none';
       document.getElementById('clearSearchMobile').style.display = 'none';
-      applyFilters();
+      applyFilters(); // sheet 層級的處理（還原搜尋前那一層）已經在 applyFilters 內部做了，這裡不用再另外蓋一次
     });
     document.getElementById('clearSearchMobile').addEventListener('click', function () {
       document.getElementById('searchInputMobile').value = '';
@@ -2386,15 +2623,15 @@
     // =============================================
     // 📋 Bottom Sheet 手勢（mobile 地圖模式）
     // 拖曳 handle 時即時跟手；放開時依拖曳距離判斷停在哪一層。
-    // 每次手勢最多移動一層；收到 summary（mini peek）之後再往下滑不會消失，
-    // 只有點 X（closeDetailPanel）才會整個收回「預設」狀態。
+    // 三檔（peek／mid／full）列表跟詳情共用；每次手勢最多移動一層。
     // =============================================
-    const SHEET_DEFAULT_HEIGHT = 80; // default（提示文字）：handle(~36px) + 上下各 20px padding + 一行文字
-    const SHEET_MINI_HEIGHT = 100;   // summary（收合摘要卡）的固定高度
+    const SHEET_PEEK_RATIO = 0.12; // 收合：露出拉桿 + 第一張卡片的頂端一小截（0.08 太矮，連卡片頂端都看不到）
+    const SHEET_MID_RATIO = 0.32;  // 中間展開：可以看到好幾張卡片／詳情的預設開啟高度
 
     function levelHeightPx(level) {
-      if (level === 'default') return SHEET_DEFAULT_HEIGHT;
-      if (level !== 'full') return SHEET_MINI_HEIGHT;
+      if (level === 'peek') return window.innerHeight * SHEET_PEEK_RATIO;
+      if (level === 'content') return sheetContentMaxHeight != null ? sheetContentMaxHeight : window.innerHeight * SHEET_MID_RATIO;
+      if (level !== 'full') return window.innerHeight * SHEET_MID_RATIO; // 'mid'
       // 完整展開最高只能頂到篩選列下緣，不能蓋住搜尋框／篩選器
       const filterBar = document.getElementById('filterBar');
       const topLimit = filterBar ? filterBar.getBoundingClientRect().bottom + 8 : window.innerHeight * 0.3;
@@ -2420,7 +2657,7 @@
         const dy = startY - e.touches[0].clientY;
         const levels = sheetLevelsStack();
         const minH = levelHeightPx(levels[0]);
-        const maxH = levelHeightPx('full');
+        const maxH = levelHeightPx(levels[levels.length - 1]); // 拿目前這個 stack 真正的最高一格，短內容詳情時是 content 不是 full
         const newHeight = Math.min(Math.max(startHeight + dy, minH), maxH);
         sidebar.style.height = newHeight + 'px';
       }, { passive: true });
