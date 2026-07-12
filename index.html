@@ -826,7 +826,7 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        padding: 16px 0px 16px 0px;
+        padding: 12px 0px 12px 0px;
         background: var(--fill-gray-6);
         cursor: grab;
         flex-shrink: 0;
@@ -841,7 +841,7 @@
         border-radius: 2px;
       }
       .sidebar-header { padding: 10px 16px 6px; }
-      .location-list { padding: 16px 20px 16px 20px; }
+      .location-list { padding: 0px 20px 00px 20px; }
       .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }
     }
 
@@ -2169,7 +2169,7 @@
       openPanelKey = key;
 
       // GA: filter_panel_open
-      gtag('event', 'filter_panel_open', { filter_type: key, device: 'desktop' });
+      gtag('event', 'filter_panel_open', { filter_type: key, device: getDeviceType() });
     }
 
     function closeDesktopPanels(skipTracking) {
@@ -2178,7 +2178,7 @@
         gtag('event', 'filter_panel_close', {
           filter_type: openPanelKey,
           had_selection: filterState[openPanelKey].length > 0,
-          device: 'desktop',
+          device: getDeviceType(),
         });
       }
       document.querySelectorAll('.filter-panel.open').forEach(p => p.classList.remove('open'));
@@ -2397,7 +2397,7 @@
       if (pill) pill.classList.add('open');
 
       // GA: filter_panel_open
-      gtag('event', 'filter_panel_open', { filter_type: key, device: 'mobile' });
+      gtag('event', 'filter_panel_open', { filter_type: key, device: getDeviceType() });
     }
 
     function closeMobileFilterSheet(skipTracking) {
@@ -2408,7 +2408,7 @@
         gtag('event', 'filter_panel_close', {
           filter_type: key,
           had_selection: (filterState[key] || []).length > 0,
-          device: 'mobile',
+          device: getDeviceType(),
         });
       }
       document.getElementById('filterSheetOverlay').classList.remove('show');
@@ -2672,7 +2672,7 @@
         else if (dy < -50 && curIdx > 0) nextIdx = curIdx - 1;               // 往下滑：收合一層（不會低於清單/摘要層）
         applySheetLevel(levels[nextIdx]);
         if (nextIdx !== curIdx) {
-          gtag('event', 'sheet_toggle', { state: levels[nextIdx] }); // GA：只在真正拖拉造成狀態改變時記錄
+          gtag('event', 'sheet_toggle', { state: levels[nextIdx], device: getDeviceType() }); // GA：只在真正拖拉造成狀態改變時記錄
         }
       });
     }
