@@ -1120,14 +1120,14 @@
       // 開著）才動作，單純瀏覽列表時點地圖空白處不用強制把使用者手動拉開的列表高度收掉。
       map.on('click', () => {
         if (isMobileMapLayout() && !sheetLoc && !anyPopupOpen) return;
-        closeDetailPanel();
+        closeDetailPanel(false, 'empty_map_tap');
       });
 
       // popup 被關閉（不管是側欄 X 觸發的、還是使用者直接再點一次同一個聚合 marker 讓 Leaflet 原生切換關閉）
       // 都順便把側欄／sheet 收回列表，避免「popup 已經關了，畫面卻還停在剛剛那台的詳情」這種不同步的狀態。
       map.on('popupclose', () => {
         anyPopupOpen = false;
-        closeDetailPanel();
+        closeDetailPanel(false, 'popup_native_close');
       });
 
       renderMapLocations(currentFiltered.length ? currentFiltered : allLocations);
@@ -1439,13 +1439,14 @@
       highlightMarker(loc);
       lastSelectedLocId = loc.id;
       focusMapOnLocation(loc);
-      applyMobileDetailHeight();
+      applyMobileDetailHeight({ preferFull: opts && opts.preferFull });
     }
 
     // ---- 詳情開啟時的高度：內容撐不滿 mid（裝置高 0.32）就縮到內容實際高度，不留空白，
     // 這種情況拖曳最高也只能到這個高度（sheetContentMaxHeight），不會拉到 full；
     // 撐得滿或更高就開在 mid，可再手動拖到 full 捲動看完 ----
-    function applyMobileDetailHeight() {
+    function applyMobileDetailHeight(opts) {
+      const preferFull = !!(opts && opts.preferFull);
       const sidebar = document.querySelector('.sidebar');
       const list = document.getElementById('locationList');
       const scrollWrapper = document.querySelector('.map-scroll-wrapper');
@@ -1454,50 +1455,46 @@
       // 切換到新的詳情內容，內部捲動位置要回到最上面，不要沿用上一筆看到一半的位置。
       if (scrollWrapper) scrollWrapper.scrollTop = 0;
       sidebar.style.transition = 'none';
-
-      const measureAndApplyHeight = () => {
-        // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成）；
-        // 用兩層 rAF 確保量到的是排版後的真實高度，避免量到還沒定案的中間值。
+      // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成）；
+      // 用兩層 rAF 確保量到的是排版後的真實高度，避免量到還沒定案的中間值。
+      requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const handle = document.querySelector('.sheet-handle');
-            const handleH = handle ? handle.getBoundingClientRect().height : 0;
-            const mid = levelHeightPx('mid');
-            const contentH = list.scrollHeight + handleH;
-            if (contentH < mid) {
-              sheetContentMaxHeight = contentH; // 記住這個高度，拖曳層級（sheetLevelsStack）會用它當拖到底的上限
+          const handle = document.querySelector('.sheet-handle');
+          const handleH = handle ? handle.getBoundingClientRect().height : 0;
+          const mid = levelHeightPx('mid');
+          const peek = levelHeightPx('peek');
+          // 量到的內容高度不能小於 peek：不管是量測時機不巧、還是內容本身真的很短，
+          // sheet（跟拉桿）都不能塌到比 peek 還矮，不然使用者連拉桿都碰不到，等於拖曳完全失效。
+          const contentH = Math.max(list.scrollHeight + handleH, peek);
+          if (contentH < mid) {
+            // 內容本來就比 mid 矮：維持貼合內容高度，就算 preferFull 也不用硬撐到 full，
+            // 不然下面只會多出一大塊空白，反而更難看。
+            sheetContentMaxHeight = contentH;
+            sheetLevel = 'content';
+            sidebar.style.height = contentH + 'px';
+          } else if (preferFull) {
+            // 分享連結進來：盡量一次看到完整內容，但高度還是貼合實際內容，
+            // 不是無腦撐死到 full 的固定高度——不然內容比 full 矮的話，下面一樣會空一大塊。
+            // 只有內容真的長到超過 full 的上限，才封頂在那個上限（此時本來就得靠捲動看完）。
+            const fullH = levelHeightPx('full');
+            const fitH = Math.min(contentH, fullH);
+            if (fitH < fullH) {
+              sheetContentMaxHeight = fitH;
               sheetLevel = 'content';
-              sidebar.style.height = contentH + 'px';
+              sidebar.style.height = fitH + 'px';
             } else {
-              sheetContentMaxHeight = null; // 內容夠高，維持一般的 mid/full 兩檔可拖
-              sheetLevel = 'mid';
-              sidebar.style.height = mid + 'px';
+              sheetContentMaxHeight = null;
+              sheetLevel = 'full';
+              sidebar.style.height = fullH + 'px';
             }
-            requestAnimationFrame(() => { sidebar.style.transition = ''; });
-          });
+          } else {
+            sheetContentMaxHeight = null; // 內容夠高，維持一般的 mid/full 兩檔可拖
+            sheetLevel = 'mid';
+            sidebar.style.height = mid + 'px';
+          }
+          requestAnimationFrame(() => { sidebar.style.transition = ''; });
         });
-      };
-
-      // 詳情內容可能含圖片；圖片載入前 <img> 沒有預留高度，會塌陷成 0，導致這裡提早量到的 contentH
-      // 被低估，誤判成「內容不夠長」而鎖進 content 模式（拖曳上限=量到的矮高度）。
-      // 這正是「第一次點開長內容詳情時無法往上拖，第二次點（圖片已快取）才正常」的成因，
-      // 所以要等內容裡的圖片都載入（或失敗）完，才進行高度量測與定檔。
-      const imgs = Array.from(list.querySelectorAll('img'));
-      const pending = imgs.filter(img => !img.complete);
-      if (pending.length === 0) {
-        measureAndApplyHeight();
-      } else {
-        let remaining = pending.length;
-        const onSettle = () => { remaining--; if (remaining <= 0) measureAndApplyHeight(); };
-        pending.forEach(img => {
-          img.addEventListener('load', onSettle, { once: true });
-          img.addEventListener('error', onSettle, { once: true });
-        });
-        // 安全網：萬一圖片遲遲不觸發 load/error（極少見），最多等 800ms 就照目前狀態量測，
-        // 避免 sheet 因為某張圖卡住而一直不展開。
-        setTimeout(() => { if (remaining > 0) { remaining = 0; measureAndApplyHeight(); } }, 800);
-      }
-
+      });
       if (map) setTimeout(() => map.invalidateSize(), 320);
     }
 
