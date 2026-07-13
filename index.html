@@ -884,8 +884,8 @@
       <div class="header-divider"></div>
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
       <div class="view-toggle">
-        <button class="view-btn" id="btnGrid" onclick="setView('grid')"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M324-600q-15.3 0-25.65-10.29Q288-620.58 288-635.79t10.35-25.71Q308.7-672 324-672h456q15.3 0 25.65 10.29Q816-651.42 816-636.21t-10.35 25.71Q795.3-600 780-600H324Zm0 156q-15.3 0-25.65-10.29Q288-464.58 288-479.79t10.35-25.71Q308.7-516 324-516h456q15.3 0 25.65 10.29Q816-495.42 816-480.21t-10.35 25.71Q795.3-444 780-444H324Zm0 156q-15.3 0-25.65-10.29Q288-308.58 288-323.79t10.35-25.71Q308.7-360 324-360h456q15.3 0 25.65 10.29Q816-339.42 816-324.21t-10.35 25.71Q795.3-288 780-288H324ZM180-600q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-636q0 14-10.35 25T180-600Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-480q0 14-10.35 25T180-444Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-324q0 14-10.35 25T180-288Z"/></svg> <span class="label">列表</span></button>
-        <button class="view-btn" id="btnMap" onclick="setView('map')">
+        <button class="view-btn" id="btnGrid" onclick="setView('grid')" aria-label="切換到列表檢視"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M324-600q-15.3 0-25.65-10.29Q288-620.58 288-635.79t10.35-25.71Q308.7-672 324-672h456q15.3 0 25.65 10.29Q816-651.42 816-636.21t-10.35 25.71Q795.3-600 780-600H324Zm0 156q-15.3 0-25.65-10.29Q288-464.58 288-479.79t10.35-25.71Q308.7-516 324-516h456q15.3 0 25.65 10.29Q816-495.42 816-480.21t-10.35 25.71Q795.3-444 780-444H324Zm0 156q-15.3 0-25.65-10.29Q288-308.58 288-323.79t10.35-25.71Q308.7-360 324-360h456q15.3 0 25.65 10.29Q816-339.42 816-324.21t-10.35 25.71Q795.3-288 780-288H324ZM180-600q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-636q0 14-10.35 25T180-600Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-480q0 14-10.35 25T180-444Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-324q0 14-10.35 25T180-288Z"/></svg> <span class="label">列表</span></button>
+        <button class="view-btn" id="btnMap" onclick="setView('map')" aria-label="切換到地圖檢視">
         <svg class="map-icon-outline" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M480-191q119-107 179.5-197T720-549q0-105-68.5-174T480-792q-103 0-171.5 69T240-549q0 71 60.5 161T480-191Zm-24.5 67.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-552Zm0 164q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg>
         <svg class="map-icon-fill" xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M455.5-123.5Q444-128 433-137q-40-35-86.5-82T260-320q-40-54-66-112.5T168-549q0-134 89-224.5T480-864q133 0 222.5 90.5T792-549q0 58-26.5 117t-66 113q-39.5 54-86 100.5T527-137q-11 9-22.5 13.5T480-119q-13 0-24.5-4.5ZM480-388q62-56 88-81t41-44q14-17 20.5-35.5T636-587q0-35-25.5-60.5T550-673q-21 0-40 9t-30 23q-12-14-30.5-23t-39.5-9q-35 0-60.5 25.5T324-587q0 19 6.5 36t20.5 36q16 21 44 48.5t85 78.5Z"/></svg>
         <span class="label">地圖</span>
@@ -898,12 +898,12 @@
     <div class="search-box search-box-desktop">
       <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
       <input type="text" id="searchInput" placeholder="搜尋 IP、縣市、場地..." />
-      <button class="search-clear-btn" id="clearSearch"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
+      <button class="search-clear-btn" id="clearSearch" aria-label="清除搜尋"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
     </div>
     <div class="search-box search-box-mobile">
       <svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor" style="flex-shrink:0"><path d="M384.03-336Q284-336 214-406t-70-170q0-100 70-170t170-70q100 0 170 70t70 170.03q0 40.39-12.5 76.18Q599-464 577-434l214 214q11 11 11 25t-11 25q-11 11-25.5 11T740-170L526-383q-30 22-65.79 34.5-35.79 12.5-76.18 12.5Zm-.03-72q70 0 119-49t49-119q0-70-49-119t-119-49q-70 0-119 49t-49 119q0 70 49 119t119 49Z"/></svg>
       <input type="text" id="searchInputMobile" placeholder="搜尋 IP、縣市、場地..." />
-      <button class="search-clear-btn" id="clearSearchMobile"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
+      <button class="search-clear-btn" id="clearSearchMobile" aria-label="清除搜尋"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></button>
     </div>
     <div class="count-badge"><strong id="countBadge">0</strong> 個地點</div>
   </div>
@@ -968,7 +968,7 @@
   <!-- Grid Detail Modal -->
   <div class="grid-modal-overlay" id="gridModal" onclick="closeGridModal(event)">
     <div class="grid-modal-box">
-      <button class="grid-modal-close" onclick="closeGridModal()">✕</button>
+      <button class="grid-modal-close" onclick="closeGridModal()" aria-label="關閉">✕</button>
       <div class="grid-modal-content" id="gridModalContent"></div>
     </div>
   </div>
@@ -1220,7 +1220,7 @@
       const headerRow = `
         <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
           ${typeBadge}
-          <button class="popup-close-btn" style="position:static;" onclick="closeDetailPanel()">✕</button>
+          <button class="popup-close-btn" style="position:static;" onclick="closeDetailPanel(false, 'x_button')" aria-label="關閉">✕</button>
         </div>
       `;
       const basicRows = `
@@ -1252,9 +1252,9 @@
                 <img src="${imgs[0]}" class="popup-img carousel-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
               </div>
               <div class="carousel-controls">
-                <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${cid}">&#8249;</button>
+                <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${cid}" aria-label="上一張圖片">&#8249;</button>
                 <span class="carousel-counter">1 / ${imgs.length}</span>
-                <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${cid}">&#8250;</button>
+                <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${cid}" aria-label="下一張圖片">&#8250;</button>
               </div>
             </div>
           </div>`;
@@ -1307,7 +1307,7 @@
         <div>
           <div style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
             <div class="popup-title" style="white-space:nowrap;">${venue}</div>
-            <button class="popup-close-btn" style="position:static; flex-shrink:0;" onclick="map.closePopup()">✕</button>
+            <button class="popup-close-btn" style="position:static; flex-shrink:0;" onclick="map.closePopup()" aria-label="關閉">✕</button>
           </div>
           <div class="popup-addr" style="margin-top:8px;margin-bottom:12px;color:var(--fill-gray-64);">目前有 ${locs.length} 台機器</div>
           <div class="cluster-popup-list">${rowsHtml}</div>
@@ -1732,9 +1732,9 @@
                 <img src="${imgs[0]}" class="carousel-grid-img" data-lightbox="${imgs[0]}" loading="lazy" alt="${loc.name}"/>
               </div>
               <div class="carousel-controls-grid">
-                <button class="carousel-btn" data-grid-action="prev" data-grid-cid="${cid}">&#8249;</button>
+                <button class="carousel-btn" data-grid-action="prev" data-grid-cid="${cid}" aria-label="上一張圖片">&#8249;</button>
                 <span class="carousel-counter" style="color:var(--grey)">1 / ${imgs.length}</span>
-                <button class="carousel-btn" data-grid-action="next" data-grid-cid="${cid}">&#8250;</button>
+                <button class="carousel-btn" data-grid-action="next" data-grid-cid="${cid}" aria-label="下一張圖片">&#8250;</button>
               </div>
             </div>`;
         }
@@ -1903,7 +1903,10 @@
             sheetLevelBeforeSearch = null;
           } else if (priorLevel === 'peek') {
             // 原本就在 peek：有結果就展開到 mid 方便直接看，不用自己往上拉；0 筆結果維持 peek（反正只有空狀態文字）
-            if (currentFiltered.length > 0) applySheetLevel('mid');
+            if (currentFiltered.length > 0) {
+              applySheetLevel('mid');
+              gtag('event', 'sheet_auto_expand', { device: getDeviceType() });
+            }
           } else {
             // 原本已經自己拉到 mid／full 在瀏覽：篩選結果變動不去動它，復原回原本那一層
             applySheetLevel(priorLevel);
@@ -2578,9 +2581,9 @@
                 <img src="${imgs[0]}" class="carousel-img popup-img" data-lightbox="${imgs[0]}" alt="${loc.name}" />
               </div>
               <div class="carousel-controls">
-                <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${mid}">&#8249;</button>
+                <button class="carousel-btn" data-carousel-action="prev" data-carousel-id="${mid}" aria-label="上一張圖片">&#8249;</button>
                 <span class="carousel-counter">${1} / ${imgs.length}</span>
-                <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${mid}">&#8250;</button>
+                <button class="carousel-btn" data-carousel-action="next" data-carousel-id="${mid}" aria-label="下一張圖片">&#8250;</button>
               </div>
             </div>
           </div>`;
