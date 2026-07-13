@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/07/12（v23）
+**最後更新：** 2026/07/13（v24）
 
 ---
 
@@ -16,7 +16,7 @@
 
 | 項目 | 工具 |
 |------|------|
-| 前端 | 純 HTML / CSS / JavaScript（單一 index.html） |
+| 前端 | 純 HTML / CSS / JavaScript（ES Modules，檔案結構見 README.md） |
 | 地圖套件 | Leaflet.js 1.9.4（OpenStreetMap 底圖，免費） |
 | 資料來源 | Google Sheet（發布為公開 CSV） |
 | 圖片託管 | Cloudinary |
@@ -74,8 +74,8 @@
 ### GA4 自訂事件追蹤
 | 事件名稱 | 觸發時機 | 參數 |
 |---|---|---|
-| `search_box_focus` | 點擊搜尋框 | `source` |
-| `search` | 輸入關鍵字（debounce 800ms） | `search_term` |
+| `search_box_focus` | 點擊搜尋框 | `source`（desktop_toolbar/mobile_toolbar）, `device` |
+| `search` | 輸入關鍵字（debounce 800ms） | `search_term`, `device` |
 | `filter_click` | 點擊篩選面板/sheet 裡的選項 | `filter_type`, `filter_value`, `filter_state`, `device` |
 | `filter_panel_open` / `filter_panel_close` | 打開/主動關閉篩選面板或 sheet | `filter_type`, `had_selection`（close 才有）, `device` |
 | `filter_clear` | 點擊篩選 pill 上的清除（X）icon，且該類別當下有套用中的篩選（v22 起從全域清除按鈕改為單一 pill 各自清除） | `filter_type`, `device` |
@@ -84,13 +84,18 @@
 | `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source`（v23 起補上 `device`；`source` 新增 `map_sidebar_list`，v23 前桌機側欄無列表可點，這條路徑是死的） |
 | `map_marker_click` | 直接點地圖圖示 | `machine_id`, `machine_type`, `device` |
 | `gmaps_click` | 點擊 Google Maps 連結 | `machine_id`, `source`, `device` |
-| `share_click` | 點擊分享按鈕 | `machine_id`, `source` |
+| `share_click` | 點擊分享按鈕（v24 補上 `device`） | `machine_id`, `source`（grid_modal/share_modal/map_detail_panel）, `device` |
 | `lightbox_open` | 點圖放大 | `machine_id`, `device` |
-| `carousel_nav` | 輪播圖切換 | `direction` |
-| `sheet_toggle` | 手機地圖模式拖拉 bottom sheet | `state`（v23 起為 `peek`/`mid`/`full`/`content`，取代原本的 `open`/`peek`） |
+| `carousel_nav` | 輪播圖切換（v24 補上 `device`） | `direction`, `device` |
+| `sheet_toggle` | 手機地圖模式拖拉 bottom sheet（v24 補上 `device`） | `state`（v23 起為 `peek`/`mid`/`full`/`content`，取代原本的 `open`/`peek`）, `device` |
 | `sheet_auto_expand`（v23） | 搜尋/篩選出結果，sheet 從 peek 自動展開到 mid | `device` |
 | `detail_panel_close`（v23） | 使用者主動關閉詳情面板/sheet（篩選/搜尋改變觸發的重置不算） | `method`（`x_button`/`empty_map_tap`/`popup_native_close`）, `device` |
-| `report_click` | 點擊回報表單連結 | — |
+| `report_click` | 點擊回報表單連結（v24 補上 `device`） | `device` |
+| `auto_refresh`（v24） | 回到前景後，通過節流門檻（距上次抓取超過 30 分鐘）、真的觸發背景刷新 | `device` |
+| `pull_to_refresh`（v24） | 列表模式下拉手勢超過觸發門檻（60px）放開 | `device` |
+| `data_refresh_error`（v24） | 靜默刷新失敗（auto 或 pull 觸發的刷新，初次載入失敗不算） | `trigger`（auto/pull）, `device` |
+| `share_link_opened`（v24） | 分享連結的 `?id=` 對應到真實機台，成功解析 | `machine_id`, `view`（map/grid）, `device` |
+| `share_link_target_missing`（v24） | 分享連結的 `?id=` 找不到對應機台（已下架/刪除） | `machine_id`, `device` |
 | `a2hs_engagement_met` | 累計查看詳情達 3 次，或單次停留超過 20 秒（v21） | `reason`, `platform` |
 | `a2hs_banner_shown` | 加到主畫面 banner 顯示（v21） | `platform` |
 | `a2hs_banner_dismissed` | 關閉加到主畫面 banner（v21） | `reason` |
@@ -103,11 +108,12 @@
 詳細觸發規則與防誤觸機制見 `CLAUDE.md`。
 
 ### 分享單一地點
-- URL 格式：`cardradartw.vercel.app/api/share?id=<id>`（v20 改為經過 serverless function，見下方「分享連結 OG Meta」；不是直接指向 `?id=<id>` 了）
+- URL 格式：`cardradartw.vercel.app/api/share?id=<id>`（v20 改為經過 serverless function，見下方「分享連結 OG Meta」；不是直接指向 `?id=<id>` 了）；v24 起在地圖模式分享時額外帶上 `&view=map`
 - 地圖 popup、詳情側邊欄/sheet、grid modal 各有一個分享按鈕
 - 手機：`navigator.share()` 跳出原生分享選單
 - 桌機：`clipboard.writeText()` + toast 提示「已複製連結！」
-- 真人點擊分享連結後會先短暫經過 `/api/share`，立刻被導回 `/?id=<id>`，資料載入後偵測 `?id=` 參數，自動開對應地點的 grid modal——使用者體感上跟原本一樣，不會感覺到多一層跳轉
+- 真人點擊分享連結後會先短暫經過 `/api/share`，立刻被導回 `/?id=<id>`（地圖模式分享的連結則是 `/?id=<id>&view=map`），資料載入後偵測參數，view=map 時切換到地圖模式並直接展開該機台詳情（桌機側欄 / 手機 bottom sheet 以 preferFull 模式展開，高度貼合內容）；無 view 參數時行為同原本，自動開對應地點的 grid modal
+- 若 ?id= 指向的機台已不存在（下架/刪除），顯示 toast「這台機台的資訊已經下架囉」
 
 ### 分享連結 OG Meta（v20 新增）
 - 社群平台（LINE / Threads / Discord / Facebook）的爬蟲不執行 JavaScript，只讀 `<head>` 裡的 `og:title`/`og:image`，所以分享連結改指向一支 serverless function（`api/share.js`），固定回傳同一組內容：
@@ -119,7 +125,9 @@
 
 ### PWA / 加到主畫面（A2HS Banner，v21 新增）
 - **manifest.json**：`name`/`short_name`、`theme_color: #0066FF`、`background_color: #F2F2F7`、`display: standalone`；圖示 `icon-192.png`/`icon-512.png`/`icon-maskable-512.png`（maskable 沿用一般版本，logo 本身留白已在安全區內）、另加 `apple-touch-icon.png`
-- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`
+- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`；v24 起 `CACHE_VERSION = 'v24'`
+- **自動刷新（v24 新增）**：回到前景（`visibilitychange`/`focus`）時，若距上次成功抓取超過 30 分鐘（`REFRESH_THROTTLE_MS`），靜默刷新資料（不清空列表、失敗只顯示 toast）；節流是為了避免短時間切來切去連打 API
+- **下拉刷新（v24 新增）**：列表模式（`#gridView`）捲到頂端時，往下拉超過 60px 放開即觸發刷新；繞過節流（使用者主動操作，應無條件給最新資料）；地圖模式不支援（手勢衝突）
 - **顯示時機**：累計「查看詳情」次數（grid 詳情 + 地圖單一 marker）達 3 次（跨造訪永久累計，存 `localStorage`），或單次瀏覽停留超過 20 秒，兩者擇一觸發；不依賴瀏覽器自身的 `beforeinstallprompt` 時機判斷或 iOS 固定延遲
 - **平台差異**：Android 按鈕觸發原生安裝流程（仍受限於瀏覽器何時發出 `beforeinstallprompt`）；iOS + Safari 顯示教學文案；iOS + 非 Safari（LINE/IG/FB 內嵌瀏覽器）先引導「用 Safari 開啟」
 - **關閉退避**：關過 3 次永久不再顯示，每次關閉後間隔 14 天才再問一次

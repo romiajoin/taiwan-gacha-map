@@ -1,0 +1,811 @@
+    :root {
+      --fill-blue:     #0066FF;
+      --fill-orange:   #EA580C; 
+      --fill-green:    #16A34A;
+      --fill-red:      #DC2626;
+      --fill-black:    #000000;
+      --fill-white:    #FFFFFF;
+      --fill-gray:     #3C3C43;
+      --fill-gray5:    #E5E5EA;
+      --fill-gray6:    #F2F2F7;
+      --fill-gray-8:   rgba(28,28,28,0.08);
+      --fill-gray-16:  rgba(28,28,28,0.16);
+      --fill-gray-64:  rgba(28,28,28,0.64);
+      --fill-blue-8: rgba(0,102,255,0.08);
+      --fill-blue-16: rgba(0,102,255,0.16);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--fill-gray6);
+      color: var(--fill-black);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== Header ===== */
+    header {
+      background: var(--fill-gray6);
+      padding: 20px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 200;
+    }
+    .logo { display: flex; align-items: center; gap: 16px; }
+    .logo-icon {
+      width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+      flex-shrink: 0; object-fit: cover;
+    }
+    .logo h1 { font-size: 24px; font-weight: 700; letter-spacing: 1px; color: var(--fill-black); }
+    .logo h1 span { color: var(--fill-blue); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .header-info { font-family: 'Space Mono', monospace; font-size: 14px; color: var(--fill-black); }
+    /* 桌面版：回報表單跟檢視切換之間的間距要是 16px，其餘子元素維持 header-right 既有的 12px gap，故補 4px margin 湊成 16px */
+    @media (min-width: 769px) {
+      .header-right .view-toggle { margin-left: 4px; }
+    }
+
+    /* View Toggle */
+    .view-toggle {
+      display: flex;
+      background: none; border: 1px solid var(--fill-blue);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .view-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 400;
+      background: none; border: none;
+      color: var(--fill-black); cursor: pointer;
+      transition: background 0.18s, color 0.18s, font-weight 0.18s;
+      display: flex; align-items: center; gap: 4px;
+    }
+    .map-icon-fill { display: none; }
+    .view-btn.active .map-icon-outline { display: none; }
+    .view-btn.active .map-icon-fill { display: block; }
+    .view-btn:hover { color: var(--fill-blue); }
+    .view-btn.active { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+    .header-divider { width: 1px; height: 16px; background: var(--fill-gray-64); }
+    .report-link { font-size: 14px; color: var(--fill-black); text-decoration: underline; white-space: nowrap; transition: color 0.15s; }
+    .report-link:hover { color: var(--fill-blue); }
+
+    /* ===== Toolbar ===== */
+    .toolbar {
+      padding: 20px 20px;
+      display: flex; align-items: center; gap: 8px;
+      flex-shrink: 0;
+      background: var(--fill-gray6);
+    }
+    .search-box {
+      display: flex; align-items: center;
+      background: var(--fill-white);
+      border-radius: 9999px; gap: 8px;
+      padding: 16px 16px;
+      width: 400px;
+      flex-shrink: 0;
+    }
+    .search-box-mobile { display: none; }
+    .search-box input {
+      background: none; border: none; outline: none;
+      color: var(--fill-black); font-family: 'Noto Sans TC', sans-serif;
+      font-size: 16px; width: 100%;
+    }
+    .search-box input::placeholder { color: var(--fill-gray-64); }
+    .search-box input:-webkit-autofill,
+    .search-box input:-webkit-autofill:focus {
+     -webkit-box-shadow: 0 0 0 1000px var(--fill-gray6) inset;
+     box-shadow: 0 0 0 1000px var(--fill-gray6) inset;
+    }
+    .search-clear-btn { display: none; background: none; border: none; padding: 0; cursor: pointer; color: var(--fill-black); flex-shrink: 0; line-height: 0; }
+    .search-clear-btn:hover { color: var(--fill-blue); }
+    .count-badge { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: var(--fill-black); white-space: nowrap; margin-left: auto; }
+    .count-badge strong { color: var(--fill-blue); font-size: 16px; font-weight: 700; font-family: 'Space Mono', monospace; }
+
+    /* ===== Visitor Banner ===== */
+    .visitor-banner {
+      background: var(--fill-blue-8);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--fill-blue);
+      flex-shrink: 0;
+    }
+    #visitorCount {
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      margin: 0 3px;
+    }
+
+    /* ===== A2HS（加到主畫面）Banner ===== */
+    .a2hs-banner {
+      position: fixed;
+      left: 10px;
+      right: 10px;
+      bottom: 12px;
+      z-index: 2100; /* 蓋過手機地圖模式的 bottom sheet（z-index: 2000），不管 sheet 展開到哪一層都疊在最上面 */
+      background: rgba(255,255,255,0.72);
+      -webkit-backdrop-filter: blur(4px);
+      backdrop-filter: blur(4px);
+      border: 1px solid var(--fill-blue);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      display: none;
+    }
+    .a2hs-banner.show { display: block; }
+    /* 平板（含 iPad、Android 平板）：固定寬度置中，不用滿版貼滿左右 */
+    @media (min-width: 768px) {
+      .a2hs-banner {
+        left: 50%;
+        right: auto;
+        bottom: 12px;
+        width: 400px;
+        transform: translateX(-50%);
+      }
+    }
+    .a2hs-top-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .a2hs-icon { flex-shrink: 0; color: var(--fill-blue); }
+    .a2hs-title {
+      flex: 1;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--fill-blue);
+    }
+    .a2hs-close {
+      flex-shrink: 0;
+      background: none; border: none; padding: 0; cursor: pointer;
+      color: var(--fill-black); line-height: 0;
+    }
+    .a2hs-bottom-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .a2hs-desc {
+      flex: 1;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 14px;
+      line-height: 21px;
+      color: var(--fill-black);
+    }
+    .a2hs-action {
+      flex-shrink: 0;
+      background: var(--fill-blue);
+      color: var(--fill-white);
+      border: none;
+      border-radius: 9999px;
+      padding: 8px 12px;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    /* ===== Filter Pills (dropdown) ===== */
+    .filter-bar {
+      background: var(--fill-gray6);
+      padding: 0px 20px 20px;
+      display: flex; align-items: center; gap: 12px;
+      flex-shrink: 0;
+    }
+    .filter-scroll {
+      display: flex; align-items: center; gap: 12px;
+      min-width: 0;
+    }
+    .filter-pill-group { position: relative; flex-shrink: 0; }
+    .filter-pill {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 8px 12px 8px 16px;
+      font-size: 14px;
+      line-height: 1.2;
+      font-family: 'Noto Sans TC', sans-serif;
+      font-weight: 400;
+      background: var(--fill-white);
+      border: none;
+      border-radius: 9999px;
+      color: var(--fill-black);
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      white-space: nowrap;
+    }
+    @media (hover: hover) {
+      .filter-pill:hover { color: var(--fill-blue); }
+    }
+    .filter-pill.active { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+    .filter-pill .pill-icon { flex-shrink: 0; display: inline-flex; }
+    .filter-pill .pill-clear { display: none; }
+    .filter-pill.active .pill-chevron { display: none; }
+    .filter-pill.active .pill-clear { display: inline-flex; }
+    .filter-pill .pill-chevron { transition: transform 0.18s; }
+    .filter-pill.open .pill-chevron { transform: rotate(180deg); }
+
+    /* 排序文字按鈕 */
+    .sort-group { position: relative; flex-shrink: 0; margin-left: 4px; } /* filter-bar 既有 gap:12px + 4px = 16px */
+    .sort-btn {
+      display: inline-flex; align-items: center; gap: 2px;
+      background: none; border: none; padding: 8px 0px;
+      font-family: 'Noto Sans TC', sans-serif; font-size: 14px; line-height: 16px;
+      color: var(--fill-black); cursor: pointer; white-space: nowrap;
+    }
+    .sort-btn .sort-label { display: flex; align-items: center; gap: 0px; }
+    @media (hover: hover) {
+      .sort-btn:hover { color: var(--fill-blue); }
+    }
+    .sort-btn .pill-chevron { flex-shrink: 0; transition: transform 0.18s; }
+    .sort-btn.open .pill-chevron { transform: rotate(180deg); }
+    @media (max-width: 768px) {
+      .sort-btn .sort-label { flex-direction: column; align-items: flex-start; gap: 0; }
+    }
+
+    /* Desktop dropdown panel */
+    .filter-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      background: var(--fill-white);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 20px;
+      width: max-content;
+      max-width: 320px;
+      max-height: 320px;
+      overflow-y: auto;
+      z-index: 1200;
+    }
+    .filter-panel.open { display: block; }
+    .filter-panel-options { display: flex; flex-wrap: wrap; gap: 12px; }
+    .filter-panel-hint {
+      font-size: 12px;
+      color: var(--fill-gray-64);
+      margin-bottom: 16px;
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .filter-option {
+      padding: 8px 16px;
+      border-radius: 9999px;
+      border: none;
+      background: var(--fill-blue-8);
+      color: var(--fill-blue);
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .filter-option:hover { background: var(--fill-blue-16); }
+    .filter-option.selected { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+
+    /* Desktop sort dropdown（單選，樣式沿用 filter-panel，但選項為直式列表） */
+    .sort-panel {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 0;
+      background: var(--fill-white);
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 20px;
+      width: max-content;
+      min-width: 160px;
+      z-index: 1200;
+    }
+    .sort-panel.open { display: flex; flex-direction: column; }
+    .sort-panel .sort-option + .sort-option { margin-top: 8px; }
+    .sort-option {
+      display: block;
+      width: 100%;
+      text-align: left;
+      padding: 8px 16px;
+      border-radius: 9999px;
+      border: none;
+      background: none;
+      color: var(--fill-black);
+      font-size: 14px;
+      font-family: 'Noto Sans TC', sans-serif;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s, color 0.15s;
+    }
+    .sort-option:hover { background: var(--fill-blue-8); color: var(--fill-blue); }
+    .sort-option.selected { background: var(--fill-blue); color: var(--fill-white); font-weight: 500; }
+    .sort-hint {
+      font-size: 12px; color: var(--fill-gray-64);
+      padding: 0px 0px 16px; font-family: 'Noto Sans TC', sans-serif;
+      display: none;
+    }
+    .sort-hint.show { display: block; }
+
+    /* Mobile filter sheet */
+    .filter-sheet-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.32);
+      z-index: 2200; /* 蓋過手機地圖模式的 pin 列表 sidebar（z-index: 2000），避免篩選/排序 sheet 被遮擋 */
+    }
+    .filter-sheet-overlay.show { display: block; }
+    .filter-sheet {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      max-height: 40vh;
+      background: var(--fill-gray6);
+      border-radius: 16px 16px 0 0;
+      z-index: 2201;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .filter-sheet-header {
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+      flex-shrink: 0;
+      padding: 20px 20px 16px;
+    }
+    .filter-sheet-title { font-size: 16px; font-weight: 500; color: var(--fill-black); }
+    .filter-sheet-close {
+      position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; cursor: pointer; color: var(--fill-black);
+      line-height: 0; padding: 0;
+    }
+    .filter-sheet-body {
+      overflow-y: auto;
+      padding: 8px 20px 20px;
+    }
+    .filter-sheet-options {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      justify-content: flex-start;
+      max-width: 100%;
+      margin: 0 auto;
+    }
+    #sortSheetOptions { display: flex; flex-direction: column; gap: 12px; }
+
+    /* Badge */
+    .type-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      align-self: flex-start;
+      font-size: 12px; font-weight: 500;
+      padding: 4px 8px; border-radius: 8px;
+      color: var(--fill-black);
+    }
+    .type-badge.gacha { background: var(--fill-white); border: 1px solid var(--fill-orange); color: var(--fill-orange); }
+    .type-badge.photocard { background: var(--fill-white); border: 1px solid var(--fill-green); color: var(--fill-green); }
+
+    /* 卡片頂部：type-badge 靠左、倒數 badge 靠右同一列 */
+    .card-badge-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    /* 倒數 badge（即將結束，3 天內）— 樣式待與 Figma 對齊 */
+    .ending-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      flex-shrink: 0;
+      font-size: 12px; font-weight: 500;
+      padding: 4px 8px; border-radius: 8px;
+      background: #FFCF48; color: var(--fill-black);
+      white-space: nowrap;
+    }
+
+
+    .content { flex: 1; overflow: hidden; display: flex; }
+
+    /* ===== Grid View ===== */
+    #gridView {
+      width: 100%; height: 100%; overflow-y: auto; padding: 20px 20px;
+      display: none;
+      overscroll-behavior-y: contain; /* 避免跟手機瀏覽器原生下拉手勢打架 */
+    }
+    #gridView.active { display: block; }
+    #gridView::-webkit-scrollbar { width: 5px; }
+    #gridView::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
+
+    /* ===== Pull to refresh（列表模式） ===== */
+    .ptr-indicator {
+      display: flex; align-items: center; justify-content: center;
+      height: 0; overflow: hidden;
+      color: var(--fill-blue);
+    }
+    .ptr-spinner {
+      width: 20px; height: 20px; margin: 10px 0;
+      border: 2px solid var(--fill-blue-16);
+      border-top-color: var(--fill-blue);
+      border-radius: 50%;
+      transition: transform 0.15s linear;
+    }
+    .ptr-indicator.loading .ptr-spinner {
+      animation: ptr-spin 0.7s linear infinite;
+    }
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    /* ===== Grid cards ===== */
+    .loc-card-grid {
+      background: var(--fill-blue-8);
+      border-radius: 16px;
+      border: 1px solid transparent;
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .loc-card-grid:hover {
+      border-color: var(--fill-blue);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px var(--fill-blue-16);
+    }
+    
+    .card-top { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card-name { font-weight: 700; font-size: 16px; line-height: 1.35; color: var(--fill-black); }
+    .card-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .tag {
+      font-size: 14px; padding: 4px 8px; border-radius: 8px;
+      background: var(--fill-gray-8); color: var(--fill-black);
+      border: 1px solid var(--fill-gray-64);
+    }
+    .card-actions { padding: 0px 16px 16px; display: flex; align-items: center; gap: 8px; margin-top: auto; }
+    .btn-gmaps {
+      display: inline-flex; align-items: center; gap: 2px;
+      color: var(--fill-blue); font-size: 14px; font-weight: 400;
+      font-family: 'Noto Sans TC', sans-serif;
+      text-decoration: underline; text-underline-offset: 3px;
+      background: none; border: none; padding: 0;
+      transition: opacity 0.2s; white-space: nowrap;
+    }
+    .btn-gmaps:hover { opacity: 0.75; }
+    .btn-expand {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 8px 12px;
+      background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
+      border-radius: 999px; color: var(--fill-blue); font-size: 12px;
+      font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
+      transition: opacity 0.2s;
+      margin-left: auto;
+    }
+    .btn-expand:hover { opacity: 0.85; }
+    .btn-expand.open { opacity: 0.85; }
+    .chevron { display: inline-block; font-style: normal; }
+
+    .card-detail { overflow: hidden; transition: max-height 0.35s ease; border-top: 1px solid transparent; }
+    .card-detail.open { border-top-color: var(--gray-16); }
+    .card-detail-inner { padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px; }
+    .detail-row { display: flex; gap: 8px; font-size: 13px; align-items: flex-start; }
+    .detail-icon { flex-shrink: 0; font-size: 14px; margin-top: 1px; }
+    .detail-text { color: var(--gray-64); line-height: 1.5; }
+
+    /* Grid carousel */
+    .carousel-grid { margin-top: 4px; background: var(--gray-8); border-radius: 10px; overflow: hidden; }
+    .carousel-grid-img-wrap { width: 100%; background: var(--gray-16); display: flex; align-items: center; justify-content: center; }
+    .carousel-grid-img { width: 100%; height: auto; cursor: zoom-in; display: block; }
+    .carousel-controls-grid { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 8px; }
+    .single-img-wrap { margin-top: 4px; border-radius: 8px; overflow: hidden; }
+    .single-img-wrap img { width: 100%; height: auto; object-fit: unset; cursor: zoom-in; display: block; }
+
+    /* ===== Last Updated ===== */
+    .last-updated-list-row { display: none; }
+
+    /* ===== Map View ===== */
+    #mapView { width: 100%; height: 100%; display: none; }
+    #mapView.active { display: flex; }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 400px;
+      background: var(--off-white);
+      border-right: 1px solid var(--gray-16);
+      display: flex; flex-direction: column; overflow: hidden; flex-shrink: 0;
+    }
+    .sidebar-placeholder {
+      color: var(--fill-black);
+      font-size: 14px;
+      line-height: 1.6;
+      padding-top: 4px;
+      text-align: center;
+    }
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-16);
+    }
+    .sidebar-header h2 {
+      font-size: 13px; color: var(--gray-64);
+      text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .map-scroll-wrapper { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+    .location-list { padding: 20px 20px; position: relative; }
+    .map-scroll-wrapper::-webkit-scrollbar { width: 0px; }
+    .map-scroll-wrapper::-webkit-scrollbar-track { background: transparent; }
+    .map-scroll-wrapper::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
+
+    /* Sidebar card */
+    .loc-card {
+      background: var(--fill-blue-8);
+      border-radius: 16px; padding: 16px; margin-bottom: 20px;
+      cursor: pointer; border: 1px solid transparent;
+      transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s;
+    }
+    .loc-card:hover { border-color: var(--fill-blue); box-shadow: 0 8px 24px rgba(0,102,255,0.24); }
+    .loc-card.active { border-color: var(--fill-blue); }
+    .loc-name { font-weight: 700; font-size: 16px; color: var(--fill-black); margin-top: 12px; margin-bottom: 14px; }
+    .loc-limited { font-size: 14px; color: var(--fill-black); font-weight: 500; margin-bottom: 12px; }
+    .loc-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+    .loc-tags .tag { font-size: 14px; padding: 4px 8px; }
+
+    /* Map */
+    #map { flex: 1; }
+
+    /* ===== 自訂地圖 Marker（取代原本的 🎰 emoji icon）===== */
+    .card-marker { background: none; border: none; }
+    .marker-pin {
+      position: relative;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: var(--marker-color, var(--fill-orange));
+      border: 2.5px solid var(--fill-white);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.35);
+      display: flex; align-items: center; justify-content: center;
+      transition: width 0.15s, height 0.15s, box-shadow 0.15s;
+    }
+    .marker-pin svg { width: 16px; height: 16px; fill: var(--fill-white); flex-shrink: 0; }
+    .marker-pin .marker-num {
+      color: var(--fill-white); font-family: 'Space Mono', monospace;
+      font-weight: 700; font-size: 13px; line-height: 1;
+    }
+    .marker-count {
+      position: absolute; top: -4px; right: -4px;
+      min-width: 18px; height: 18px; padding: 0 4px;
+      border-radius: 999px;
+      background: var(--fill-white); color: var(--marker-color, var(--fill-orange));
+      border: 1.5px solid var(--marker-color, var(--fill-orange));
+      font-family: 'Space Mono', monospace; font-size: 11px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+    }
+    .card-marker.selected .marker-pin { width: 40px; height: 40px; box-shadow: 0 4px 14px rgba(0,0,0,0.45); }
+    .card-marker.selected .marker-pin svg { width: 20px; height: 20px; }
+
+    /* 同座標多機的 cluster popup 清單 */
+    .cluster-popup-list { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+    .cluster-popup-item {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%;
+      padding: 12px 12px;
+      background: var(--fill-white);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      cursor: pointer; text-align: left;
+      font-family: 'Noto Sans TC', sans-serif;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .cluster-popup-item:hover { border-color: var(--fill-blue); background: var(--fill-blue-8); }
+    .cluster-popup-item.selected { border-color: var(--fill-blue); background: var(--fill-blue-8); }
+    .cluster-popup-item .type-badge { flex-shrink: 0; padding: 4px; align-self: center; }
+    .cluster-popup-item .type-badge svg { width: 14px; height: 14px; fill: currentColor; flex-shrink: 0; }
+    .cluster-popup-item-text {
+      display: flex; flex-direction: column; gap: 4px;
+      flex: 1;
+    }
+    .cluster-popup-item-name {
+      font-size: 14px; font-weight: 500; color: var(--fill-black);
+      white-space: nowrap;
+    }
+    .cluster-popup-item-sub {
+      font-size: 12px; font-weight: 400; color: var(--fill-gray-64);
+      white-space: nowrap;
+    }
+
+    /* ===== Leaflet popup ===== */
+    .leaflet-popup-content-wrapper {
+      background: var(--fill-gray6); color: var(--fill-black);
+      border: 1px solid var(--fill-blue); border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      font-family: 'Noto Sans TC', sans-serif;
+    }
+    .leaflet-popup-content { margin: 16px !important; position: relative; max-height: 70vh; overflow-y: auto; }
+    .popup-close-btn {
+      position: absolute; top: 4px; right: 4px; z-index: 10;
+      width: 24px; height: 24px;
+      background: none; border: none; color: var(--fill-black);
+      font-size: 18px; cursor: pointer; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .popup-close-btn:hover { color: var(--fill-blue); }
+    .leaflet-popup-tip { background: var(--fill-gray6); }
+    .popup-title { font-weight: 700; font-size: 16px; margin-bottom: 0; color: var(--fill-black); flex: 1; }
+    .popup-addr { font-size: 14px; color: var(--fill-black); margin-bottom: 0; }
+    .popup-limited {
+      display: inline-block; padding: 4px 8px;
+      background: var(--fill-gray-8); border: 1px solid var(--fill-gray-64);
+      border-radius: 8px; color: var(--fill-black); font-size: 14px; font-weight: 400;
+      margin-top: 4px;
+    }
+    .popup-img-wrap {
+      background: var(--fill-gray-8); border-radius: 8px;
+      padding: 12px; margin-top: 12px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .popup-img { width: 100%; height: auto; border-radius: 8px; display: block; cursor: zoom-in; }
+    .popup-gmaps-link {
+      display: inline-flex; align-items: center; gap: 2px;
+      margin-top: 12px; color: var(--fill-blue) !important;
+      font-size: 14px; font-weight: 400; text-decoration: underline; transition: opacity 0.2s;
+    }
+    .popup-gmaps-link:hover { opacity: 0.75; }
+    .leaflet-popup-content .popup-gmaps-link { color: var(--fill-blue) !important; text-decoration: underline !important; }
+    .popup-actions { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    .popup-actions .popup-gmaps-link { display: inline-flex; margin-top: 0; flex: 1; }
+    .popup-share-btn {
+      display: inline-flex; align-items: center; gap: 2px;
+      padding: 8px 12px;
+      background: var(--fill-blue-8); border: var(--fill-blue) 1px solid;
+      border-radius: 999px; color: var(--fill-blue); font-size: 12px;
+      font-family: 'Noto Sans TC', sans-serif; cursor: pointer;
+      transition: opacity 0.2s; white-space: nowrap; flex-shrink: 0;
+    }
+    .popup-share-btn:hover { opacity: 0.85; }
+    #share-toast {
+      position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(8px);
+      background: var(--fill-black); color: var(--fill-white);
+      padding: 8px 18px; border-radius: 8px; font-size: 14px;
+      opacity: 0; transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none; z-index: 9999;
+    }
+    #share-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    /* Popup carousel */
+    .carousel { margin-bottom: 0px; }
+    .carousel-img-wrap { display: flex; align-items: center; justify-content: center; width: 100%; }
+    .carousel-controls { display: flex; align-items: center; justify-content: center; gap: 16px; margin-top: 12px; }
+    .carousel-btn {
+      background: var(--fill-blue); color: var(--fill-white); border: none; border-radius: 50%;
+      width: 20px; height: 20px; min-width: 20px; font-size: 14px; font-weight: bold;
+      line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.2s; padding: 0;
+    }
+    .carousel-btn:hover { opacity: 0.8; }
+    .carousel-counter { font-size: 12px; color: var(--fill-black); min-width: 32px; text-align: center; }
+
+    /* ===== Lightbox ===== */
+    .lightbox {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.9); z-index: 99999;
+      align-items: center; justify-content: center; cursor: zoom-out;
+    }
+    .lightbox.show { display: flex; }
+    .lightbox img { max-width: 90vw; max-height: 90vh; object-fit: contain; border-radius: 8px; }
+
+    /* ===== Grid Detail Modal ===== */
+    .grid-modal-overlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.7); z-index: 9999;
+      align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .grid-modal-overlay.show { display: flex; }
+    .grid-modal-box {
+      background: var(--fill-gray6); border: 1px solid var(--fill-blue);
+      border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      width: 100%; max-width: 400px; max-height: 90vh;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .grid-modal-close {
+      position: absolute; top: 16px; right: 16px;
+      width: 24px; height: 24px; flex-shrink: 0;
+      background: none; border: none; color: var(--black);
+      font-size: 18px; cursor: pointer; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+      z-index: 10;
+    }
+    .grid-modal-close:hover { color: var(--fill-blue); }
+    .grid-modal-content { padding: 0 16px 16px; overflow-y: auto; flex: 1; }
+    .modal-header { display: flex; align-items: center; padding-right: 4px; margin-bottom: 8px; }
+    .modal-info-section { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .modal-type-badge { margin: 16px 0 12px; }
+
+    /* ===== Empty ===== */
+    .empty-state { grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--gray-64); font-size: 15px; }
+
+    @media (max-width: 768px) {
+      .view-btn .label { display: none; }
+      .view-btn { padding: 8px 16px; }
+      header { padding: 20px; justify-content: flex-start; gap: 16px; }
+      .header-info { display: none; }
+      .header-right .report-link,
+      .header-right .header-divider { display: none; }
+      .logo { flex: 1; min-width: 0; }
+      .logo h1 { font-size: 16px; }
+      #gridView { padding: 12px 20px 20px; }
+      .toolbar { padding: 12px 20px 12px 20px; }
+      .search-box { width: 100%; flex-shrink: 1; }
+      .search-box-desktop { display: none; }
+      .search-box-mobile { display: flex; width: 100%; flex-shrink: 1; padding-top: 12px; padding-bottom: 12px; }
+      .search-box-mobile input { font-size: 16px; }
+      .filter-bar { padding: 4px 20px 12px 20px; gap: 0; }
+      .filter-scroll { overflow-x: auto; gap: 12px; flex: 1; min-width: 0; }
+      .filter-scroll::-webkit-scrollbar { display: none; }
+      .sort-group { flex-shrink: 0; margin-left: 16px; margin-right: 0px; }
+      .last-updated-list-row {
+        display: flex; align-items: center; justify-content: center;
+        gap: 8px; padding-bottom: 12px;
+        font-family: 'Space Mono', monospace;
+        font-size: 12px; font-weight: 400; color: var(--fill-black);
+      }
+      body.map-view .last-updated-list-row { display: none; }
+      .last-updated-list-row .report-link { font-size: 12px; }
+
+      /* 地圖模式：bottom sheet（跟 isMobileMapLayout() 統一用同一條 768px 分界線） */
+      #mapView {
+        flex-direction: column;
+        position: relative;
+      }
+      #map {
+        flex: 1;
+        min-height: 0;
+        order: unset;
+      }
+      .sidebar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        border-right: none;
+        border-top: none;
+        border-radius: 16px 16px 0 0;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.10);
+        transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        background: var(--fill-gray6);
+      }
+      /* Grid view 時隱藏 sidebar */
+      body:not(.map-view) .sidebar {
+        display: none;
+      }
+      /* sheet 高度改由 JS 依「篩選列下緣」動態計算並直接寫 inline style，不再用固定 vh class */
+      .sheet-handle {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 12px 0px 12px 0px;
+        background: var(--fill-gray-6);
+        cursor: grab;
+        flex-shrink: 0;
+        touch-action: none;
+      }
+      /* 預設狀態（沒點任何 marker）的提示文字，上下留 20px，比收合摘要卡矮 */
+      .sidebar-placeholder { padding: 20px 0; }
+      .sheet-handle-bar {
+        width: 36px;
+        height: 4px;
+        background: var(--fill-gray-16);
+        border-radius: 2px;
+      }
+      .sidebar-header { padding: 10px 16px 6px; }
+      .location-list { padding: 0px 20px 00px 20px; }
+      .leaflet-popup-content { max-height: 40vh !important; overflow-y: auto !important; overflow-x: hidden !important; }
+    }
+
+    /* ===== Mobile ===== */
+
