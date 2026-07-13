@@ -13,7 +13,9 @@ const DESCRIPTION = '想找抽卡機 / 相卡機？到「抽卡機在哪！Card 
 
 module.exports = function handler(req, res) {
   const id = req.query.id || '';
-  const targetUrl = `${SITE_URL}/?id=${encodeURIComponent(id)}`;
+  // 只白名單允許 view=map，其餘值一律忽略（避免把任意 query 原封轉發，保守一點）
+  const view = req.query.view === 'map' ? '&view=map' : '';
+  const targetUrl = `${SITE_URL}/?id=${encodeURIComponent(id)}${view}`;
 
   res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate=3600');

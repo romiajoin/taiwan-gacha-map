@@ -1327,7 +1327,7 @@
             e.stopPropagation();
             const loc = locs.find(l => String(l.id) === btn.dataset.locId);
             if (!loc) return;
-            gtag('event', 'card_click', { machine_id: loc.id, machine_name: loc.name, machine_type: loc.type, source: 'map_cluster_popup' });
+            gtag('event', 'card_click', { machine_id: loc.id, machine_name: loc.name, machine_type: loc.type, source: 'map_cluster_popup', device: getDeviceType() });
             // popup 保持開著，mobile／desktop 一致；mobile 用 sheet 顯示摘要卡，desktop 用側邊欄顯示完整詳情
             if (isMobileMapLayout()) {
               openMobileSheetSummary(loc);
@@ -1504,9 +1504,14 @@
     // Mobile：從 sheet 列表進入的詳情，關閉後回到選中前那一層；其餘入口一律回 peek；
     // 篩選／搜尋條件改變時（forcePeek=true）無條件回 peek，不管有沒有記住的列表層級。
     let closingDetailPanel = false; // 防重入：map.closePopup() 會同步觸發 popupclose，那個監聽器也會呼叫這裡，沒擋住會無限遞迴
-    function closeDetailPanel(forcePeek) {
+    function closeDetailPanel(forcePeek, method) {
       if (closingDetailPanel) return;
       closingDetailPanel = true;
+      // 只在「真的正在看某台機台詳情」時才算一次使用者主動關閉；篩選/搜尋改變觸發的重置（forcePeek）
+      // 是別的事件在管的事，不是使用者主動關閉這個動作本身，不重複記錄。
+      if (!forcePeek && method && sheetLoc) {
+        gtag('event', 'detail_panel_close', { method, device: getDeviceType() });
+      }
       sheetLoc = null;
       document.querySelectorAll('.card-marker.selected').forEach(el => el.classList.remove('selected'));
       if (map) map.closePopup(); // 側欄／sheet 收回時，順便關掉任何還開著的 cluster popup，兩者維持同步
@@ -1577,6 +1582,7 @@
             machine_name: loc.name,
             machine_type: loc.type,
             source: 'map_sidebar_list',
+            device: getDeviceType(),
           });
           window.a2hsRecordCardView && window.a2hsRecordCardView();
           if (isMobileMapLayout()) {
@@ -1684,21 +1690,54 @@
         buildFilterOptions(locations);
         renderFilterBar();
 
-        // 偵測分享連結 ?id=xxx
-        const urlId = new URLSearchParams(window.location.search).get('id');
-        if (urlId) {
-          const target = allLocations.find(l => l.id === urlId);
-          if (target) {
-            const imgs = target.image ? target.image.split(',').map(u => driveUrlToImage(u.trim())).filter(Boolean) : [];
-            const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
-            openGridModal(target, imgs, googleMapsUrl, 'share_modal');
+        // 偵測分享連結 ?id=xxx（只在真正的初次載入處理一次；靜默背景刷新/下拉刷新不重跑，
+        // 不然使用者關掉彈窗後，只要背景刷新一次就又被彈回來）
+        if (!silent) {
+          const params = new URLSearchParams(window.location.search);
+          const urlId = params.get('id');
+          const urlView = params.get('view');
+          if (urlId) {
+            const target = allLocations.find(l => l.id === urlId);
+            if (target) {
+              // GA: share_link_opened（分享連結被真的點開，跟 share_click 配對可以算轉換率）
+              gtag('event', 'share_link_opened', {
+                machine_id: target.id,
+                view: urlView === 'map' ? 'map' : 'grid',
+                device: getDeviceType(),
+              });
+              if (urlView === 'map') {
+                // 從地圖模式分享出去的連結：回到地圖模式，直接開那一台的詳情（桌機側欄／手機 bottom sheet）
+                setView('map');
+                if (isMobileMapLayout()) {
+                  openMobileSheetSummary(target, { preferFull: true });
+                } else {
+                  openDesktopSidebar(target);
+                }
+              } else {
+                const imgs = target.image ? target.image.split(',').map(u => driveUrlToImage(u.trim())).filter(Boolean) : [];
+                const googleMapsUrl = `https://www.google.com/maps/search/?api=1&query=${target.lat},${target.lng}`;
+                openGridModal(target, imgs, googleMapsUrl, 'share_modal');
+              }
+            } else {
+              // 分享連結裡的機台已經不存在了（例如下架/被刪除），靜默失敗會讓使用者困惑點進來怎麼什麼都沒發生
+              if (typeof showToast === 'function') showToast('這台機台的資訊已經下架囉');
+              // GA: share_link_target_missing（抓多少舊分享連結正在失效）
+              gtag('event', 'share_link_target_missing', { machine_id: urlId, device: getDeviceType() });
+            }
           }
         }
 
       } catch (err) {
         console.error('載入失敗：', err);
-        document.getElementById('grid').innerHTML =
-          '<div class="empty-state">❌ 資料載入失敗<br><small>請確認 Sheet 已設定公開發布</small></div>';
+        if (silent) {
+          // 背景／下拉刷新失敗：不清空使用者正在看的清單，只用 toast 提示
+          if (typeof showToast === 'function') showToast('更新失敗，請稍後再試');
+          // GA: data_refresh_error（背景/下拉刷新失敗，抓 Sheet 掛掉的頻率）
+          gtag('event', 'data_refresh_error', { trigger, device: getDeviceType() });
+        } else {
+          document.getElementById('grid').innerHTML =
+            '<div class="empty-state">❌ 資料載入失敗<br><small>請確認 Sheet 已設定公開發布</small></div>';
+        }
       }
     }
 
@@ -1784,6 +1823,7 @@
               machine_name: loc.name,
               machine_type: loc.type,
               source: 'grid',
+              device: getDeviceType(),
             });
             window.a2hsRecordCardView && window.a2hsRecordCardView();
             openGridModal(loc, imgs, googleMapsUrl, 'grid_modal');
@@ -1974,8 +2014,15 @@
 
     // GA 用的裝置判斷：用輸入裝置類型（觸控 vs 滑鼠），不受視窗寬度縮放影響，
     // 跟上面純粹用來決定排版（dropdown vs bottom sheet）的 isMobileFilterLayout() 分開。
+    // 是不是已安裝的 PWA（standalone 模式）在打開；跟 getDeviceType() 共用同一個判斷準則，
+    // 避免各處各自重複寫一份、之後改判斷邏輯要到處找。
+    function isStandaloneMode() {
+      return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    }
+
     function getDeviceType() {
-      return window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
+      const base = window.matchMedia('(pointer: coarse)').matches ? 'mobile' : 'desktop';
+      return isStandaloneMode() ? `${base}_pwa` : base;
     }
 
     function pillLabelText(cfg) {
@@ -2401,6 +2448,12 @@
       renderGrid(currentFiltered);
       if (map) renderMapLocations(currentFiltered);
 
+      // 排序＝重新給名次，捲動位置停在原地會對不上新的順序，兩種模式／裝置都直接捲回最上面
+      const gridViewEl = document.getElementById('gridView');
+      if (gridViewEl) gridViewEl.scrollTop = 0;
+      const mapScrollWrapper = document.querySelector('.map-scroll-wrapper');
+      if (mapScrollWrapper) mapScrollWrapper.scrollTop = 0;
+
       // GA: sort_change（新事件，尚未列入 GA4 事件表，之後要記得補上）
       gtag('event', 'sort_change', { sort_key: key, device: getDeviceType() });
     }
@@ -2463,12 +2516,12 @@
       clearTimeout(searchTrackTimer);
       if (kw.length < 2) return;
       searchTrackTimer = setTimeout(() => {
-        gtag('event', 'search', { search_term: kw });
+        gtag('event', 'search', { search_term: kw, device: getDeviceType() });
       }, 800);
     }
 
     document.getElementById('searchInput').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus', { source: 'desktop_toolbar' });
+      gtag('event', 'search_box_focus', { source: 'desktop_toolbar', device: getDeviceType() });
     });
     document.getElementById('searchInput').addEventListener('input', function () {
       document.getElementById('clearSearch').style.display = this.value ? 'block' : 'none';
@@ -2477,7 +2530,7 @@
     });
 
     document.getElementById('searchInputMobile').addEventListener('focus', function() {
-      gtag('event', 'search_box_focus', { source: 'mobile_toolbar' });
+      gtag('event', 'search_box_focus', { source: 'mobile_toolbar', device: getDeviceType() });
     });
     document.getElementById('searchInputMobile').addEventListener('input', function () {
       document.getElementById('clearSearchMobile').style.display = this.value ? 'block' : 'none';
@@ -2512,7 +2565,7 @@
         e.stopPropagation();
         const action = gridBtn.getAttribute('data-grid-action');
         // GA: carousel_nav（精簡版，不帶 machine_id，避免同一人滑多張洗版）
-        gtag('event', 'carousel_nav', { direction: action });
+        gtag('event', 'carousel_nav', { direction: action, device: getDeviceType() });
         const cid = gridBtn.getAttribute('data-grid-cid');
         const el = document.getElementById(cid);
         if (!el) return;
@@ -2543,7 +2596,7 @@
         e.stopPropagation(); e.preventDefault();
         const action = btn.getAttribute('data-carousel-action');
         // GA: carousel_nav（精簡版，不帶 machine_id，避免同一人滑多張洗版）
-        gtag('event', 'carousel_nav', { direction: action });
+        gtag('event', 'carousel_nav', { direction: action, device: getDeviceType() });
         const id = btn.getAttribute('data-carousel-id');
         const el = document.getElementById(id);
         if (!el) return;
@@ -2633,9 +2686,12 @@
       // 分享出去的連結走 /api/share?id=xxx，讓 LINE/Threads 等平台的爬蟲能讀到
       // 這個機台對應的 og:title/og:description（見 api/share.js）；
       // 真人點進來後，那支 function 會立刻導回這裡（/?id=xxx），使用體驗不變。
-      const url = `${window.location.origin}/api/share?id=${id}`;
+      // 額外帶上 view=map（僅在地圖模式分享時），讓對方點開後回到地圖模式、直接看到這一台的詳情，
+      // 而不是統一收斂成列表模式的彈窗。
+      const isMapView = document.body.classList.contains('map-view');
+      const url = `${window.location.origin}/api/share?id=${id}${isMapView ? '&view=map' : ''}`;
       // GA: share_click
-      gtag('event', 'share_click', { machine_id: id, source: source || 'unknown' });
+      gtag('event', 'share_click', { machine_id: id, source: source || 'unknown', device: getDeviceType() });
       if (navigator.share) {
         navigator.share({ title: '抽卡機在哪！Card Radar', url });
       } else {
@@ -2725,7 +2781,7 @@
     // GA: report_click（所有回報表單連結）
     document.querySelectorAll('.report-link').forEach(link => {
       link.addEventListener('click', () => {
-        gtag('event', 'report_click');
+        gtag('event', 'report_click', { device: getDeviceType() });
       });
     });
 
@@ -2784,7 +2840,7 @@
         return daysSince > COOLDOWN_DAYS;
       }
       function isStandalone() {
-        return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+        return isStandaloneMode();
       }
       function getCumulativeViews() {
         try { return parseInt(localStorage.getItem(VIEWS_KEY) || '0', 10) || 0; }
@@ -2989,8 +3045,7 @@
 
     // GA：這次是用已安裝的 PWA（standalone）打開，還是一般瀏覽器 —— 用來驗證安裝後有沒有真的被回訪使用
     gtag('event', 'pwa_launch_mode', {
-      mode: (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true)
-        ? 'standalone' : 'browser',
+      mode: isStandaloneMode() ? 'standalone' : 'browser',
     });
 
     // 初始化

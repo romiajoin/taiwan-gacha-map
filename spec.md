@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/07/11（v22）
+**最後更新：** 2026/07/12（v23）
 
 ---
 
@@ -81,13 +81,15 @@
 | `filter_clear` | 點擊篩選 pill 上的清除（X）icon，且該類別當下有套用中的篩選（v22 起從全域清除按鈕改為單一 pill 各自清除） | `filter_type`, `device` |
 | `filter_result` | 篩選結果更新（debounce 800ms） | `type`, `city`, `ip`, `result_count`, `device` |
 | `view_toggle` | 切換列表 / 地圖 | `view_mode`, `device` |
-| `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source` |
+| `card_click` | 點擊機台卡片 | `machine_id`, `machine_name`, `machine_type`, `source`（v23 起補上 `device`；`source` 新增 `map_sidebar_list`，v23 前桌機側欄無列表可點，這條路徑是死的） |
 | `map_marker_click` | 直接點地圖圖示 | `machine_id`, `machine_type`, `device` |
 | `gmaps_click` | 點擊 Google Maps 連結 | `machine_id`, `source`, `device` |
 | `share_click` | 點擊分享按鈕 | `machine_id`, `source` |
 | `lightbox_open` | 點圖放大 | `machine_id`, `device` |
 | `carousel_nav` | 輪播圖切換 | `direction` |
-| `sheet_toggle` | 手機地圖模式拖拉 bottom sheet | `state` |
+| `sheet_toggle` | 手機地圖模式拖拉 bottom sheet | `state`（v23 起為 `peek`/`mid`/`full`/`content`，取代原本的 `open`/`peek`） |
+| `sheet_auto_expand`（v23） | 搜尋/篩選出結果，sheet 從 peek 自動展開到 mid | `device` |
+| `detail_panel_close`（v23） | 使用者主動關閉詳情面板/sheet（篩選/搜尋改變觸發的重置不算） | `method`（`x_button`/`empty_map_tap`/`popup_native_close`）, `device` |
 | `report_click` | 點擊回報表單連結 | — |
 | `a2hs_engagement_met` | 累計查看詳情達 3 次，或單次停留超過 20 秒（v21） | `reason`, `platform` |
 | `a2hs_banner_shown` | 加到主畫面 banner 顯示（v21） | `platform` |
@@ -146,17 +148,22 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - Tags：白色文字 + 白色邊框 + 半透明背景
 - 「詳情」按鈕：青色實心 `#00c2a8`，黑色文字，↗ 圖示，點擊開啟彈窗
 
-### 地圖模式詳情面板（v20 重做，取代原本「側邊欄列表」）
+### 地圖模式詳情面板（v20 重做，v23 大幅改版）
 **桌面版**
-- 固定寬 400px（原本 360px），**常駐顯示**，不是點了才出現
-- 預設內容是提示文字「點選地圖上的圖示，查看機台詳細資訊」
-- 點單一地點 marker，或 cluster popup 清單裡的項目 → 顯示該筆完整詳情
-- 收回：點面板上的 X，或點地圖空白處 → 換回提示文字（面板本身不會消失/隱藏）
+- 固定寬 400px，**常駐顯示**，不是點了才出現
+- 預設內容改為**可捲動的地點卡片列表**（v23 起，取代原本的提示文字），跟列表模式共用同一套卡片渲染
+- 點單一地點 marker、側欄列表卡片，或 cluster popup 清單裡的項目 → 顯示該筆完整詳情
+- 收回：點面板上的 X，或點地圖空白處 → 換回列表（面板本身不會消失/隱藏），並捲動到最後選中那張卡片的位置（對齊頂部）
+- 切走列表模式再切回地圖模式，維持原本選中的詳情不變
 
-**手機版（bottom sheet）**
-- 不再「一直顯示全部地點清單」，改成三段高度：`default`（提示文字，固定矮高度）→ `summary`（點了地點後的摘要卡，固定矮高度）→ `full`（拖 handle 展開，動態計算高度、不會蓋住上方篩選列）
-- `summary` 跟 `full` 顯示的是同一份完整內容，差別只在 sheet 高度（矮的只露出頂部，靠內部捲動裁掉多的部分）
-- 往下滑最低只會停在 `summary`（或沒選地點時的 `default`），不會自動消失，只有點 X 才整個收回
+**手機版（bottom sheet，v23 重寫，共用系統取代原本的固定高度）**
+- 高度分三檔，**列表跟詳情共用同一套**：`peek`（裝置高 0.12，只露出拉桿 + 卡片頂端一小截）、`mid`（裝置高 0.32）、`full`（貼齊上方篩選列下緣，動態計算，不會蓋住搜尋框/篩選器）
+- 預設狀態（沒選任何地點）改為**可捲動的地點卡片列表**（取代原本的提示文字），跟桌機、列表模式共用同一套卡片渲染
+- 詳情內容依實際高度決定 sheet 高度：內容撐不滿 `mid` 就縮到內容實際高度（不留空白），此時拖曳上限也是內容高度、不是 `full`，避免內容很短卻能拖出一大片空白；內容撐得滿或更高就開在 `mid`，可再手動拖到 `full` 捲動看完
+- 從列表點卡片進入詳情，關閉後回到選中前的那個層級；從地圖 marker 或 cluster popup 進入詳情，關閉後一律回到 `peek`——即使在 popup 裡切換到別的機台、別的聚合點，只要最一開始是從列表進來的，這個記憶都會保留到真正關閉那一刻
+- 點聚合 marker 時，sheet 先收到 `peek`，讓地圖空間空出來顯示 popup；點地圖空白處也會收合 sheet（僅限有詳情或 popup 開著時，單純瀏覽列表不受影響）
+- 關閉詳情、回到列表時，捲動到最後選中那張卡片的位置（對齊頂部），不是回到列表頂端，也不是還原成點擊當下原本捲到哪裡
+- 搜尋/篩選出結果時，若 sheet 目前收在 `peek`，自動展開到 `mid` 方便直接看結果；使用者若已經手動拉開到 `mid`/`full`，不會被強制改動；清空搜尋時還原成搜尋前的層級，而非搜尋期間自動展開後的層級
 - 搜尋框/篩選器跟列表模式共用同一組元件，不再有地圖模式專屬的搜尋框
 
 ### 篩選
@@ -171,6 +178,11 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - 類型 Badge 顯示於：列表卡片左上角、詳情 Modal、地圖 Popup（樣式與篩選 UI 無關，維持原本設計）
   - 抽卡機：背景 `#00c2a8`，黑字，`border-radius: 4px`，icon：Material Symbols playing_cards（FILL1）
   - 相卡機：背景 `#ffcf48`，黑字，`border-radius: 4px`，icon：Material Symbols photo_camera（FILL1）
+
+### 倒數 Badge（v23 新增）
+- 顯示於列表卡片，跟類型 badge 同一個 row（`.card-badge-row`），類型 badge 靠左、倒數 badge 靠右
+- 只在期間限定活動結束日 3 天內顯示：今天結束顯示「最後一天」，明天結束顯示「倒數 2 天」，後天結束顯示「倒數 3 天」；超過 3 天，或機台沒有期間限定日期，都不顯示
+- 背景 `#FFCF48`，黑字
 
 ### 排序（v22 新增）
 - 位於篩選 pill 列右側，與 pill 間隔 16px，純文字＋chevron（無 pill 外框），單選
@@ -202,8 +214,10 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 
 | 裝置 | 版面 |
 |------|------|
-| 桌機（>640px） | Header + Toolbar + 主內容區（Grid 或 Map+Sidebar 並排） |
-| 手機（≤640px） | Header + 主內容區（地圖全螢幕 + 底部 bottom sheet） |
+| 桌機（>768px） | Header + Toolbar + 主內容區（Grid 或 Map+Sidebar 並排） |
+| 手機（≤768px） | Header + 主內容區（地圖全螢幕 + 底部 bottom sheet） |
+
+> v23 起地圖版面與篩選版面的斷點統一為 768px（原本分別是 640px / 768px 兩組不同斷點，已合併）。
 
 ### 手機版地圖模式
 - Toolbar（搜尋框）跟列表模式共用，不再隱藏（v20 起地圖模式也會顯示）
@@ -211,13 +225,13 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - 篩選/排序面板改為 bottom sheet 呈現，`z-index: 2200`/`2201`，蓋過下方的 sidebar bottom sheet（`z-index: 2000`）；v22 修正前兩者疊層順序相反，篩選/排序 sheet 曾被地圖 sidebar 蓋住，見 `CLAUDE.md`
 - 地圖：`flex: 1` 佔滿整個內容區高度
 - 詳情面板（bottom sheet）：`position: fixed; bottom: 0`，疊在地圖上方，`z-index: 2000`（蓋過 Leaflet 內建控制項）
-  - **`default` state**（預設，沒選任何地點）：固定矮高度，顯示提示文字
-  - **`summary` state**（點了地點後）：固定矮高度，顯示完整詳情內容，靠捲動裁掉超出範圍的部分（視覺上只露出頂部）
-  - **`full` state**（往上拖 handle 展開）：動態計算高度（不超過篩選列下緣），顯示同一份完整詳情內容
+  - **`peek`**（裝置高 0.12）：預設狀態，顯示可捲動的地點卡片列表，只露出拉桿 + 卡片頂端一小截
+  - **`mid`**（裝置高 0.32）：往上拖一段，可看到好幾張卡片；詳情內容若撐不滿 mid 也會停在這個高度以下、縮到內容實際高度
+  - **`full`**（動態計算，貼齊上方篩選列下緣）：繼續往上拖到底，捲動看完剩餘內容；內容撐不滿 mid 的短詳情沒有這一檔，拖到底就停在內容本身的高度
   - 內部結構由上至下：
     1. `.sheet-handle`（drag handle pill，觸控熱區上下各 16px padding）
     2. `.map-scroll-wrapper`（`flex: 1; overflow-y: auto`）
-       - `.location-list`（依狀態顯示提示文字或完整詳情，動態塞入 innerHTML）
+       - `.location-list`（依狀態顯示地點列表或完整詳情，動態塞入 innerHTML）
 
 ---
 
