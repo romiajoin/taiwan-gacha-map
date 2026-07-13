@@ -466,10 +466,29 @@
     #gridView {
       width: 100%; height: 100%; overflow-y: auto; padding: 20px 20px;
       display: none;
+      overscroll-behavior-y: contain; /* 避免跟手機瀏覽器原生下拉手勢打架 */
     }
     #gridView.active { display: block; }
     #gridView::-webkit-scrollbar { width: 5px; }
     #gridView::-webkit-scrollbar-thumb { background: var(--blue); border-radius: 4px; }
+
+    /* ===== Pull to refresh（列表模式） ===== */
+    .ptr-indicator {
+      display: flex; align-items: center; justify-content: center;
+      height: 0; overflow: hidden;
+      color: var(--fill-blue);
+    }
+    .ptr-spinner {
+      width: 20px; height: 20px; margin: 10px 0;
+      border: 2px solid var(--fill-blue-16);
+      border-top-color: var(--fill-blue);
+      border-radius: 50%;
+      transition: transform 0.15s linear;
+    }
+    .ptr-indicator.loading .ptr-spinner {
+      animation: ptr-spin 0.7s linear infinite;
+    }
+    @keyframes ptr-spin { to { transform: rotate(360deg); } }
 
     .grid {
       display: grid;
@@ -917,6 +936,7 @@
   <div class="content">
     <!-- Grid View -->
     <div id="gridView">
+      <div class="ptr-indicator" id="ptrIndicator"><div class="ptr-spinner"></div></div>
       <div class="last-updated-list-row">
         <div class="last-updated-list" id="listLastUpdated"></div>
         <div class="header-divider"></div>
@@ -970,6 +990,10 @@
 
   <script>
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQgBZrLfJlb-JY9YGm3o9vX5w3jG9hojq5E79tStxW1g89rKpuMnaRi1vA833KmZbilAAv9vrhttqQh/pub?gid=0&single=true&output=csv';
+
+    // PWA 回到前景自動刷新的節流門檻：距上次抓取超過這個時間才真的打 API
+    const REFRESH_THROTTLE_MS = 30 * 60 * 1000; // 30 分鐘
+    let lastFetchTime = 0;
 
 
     // =============================================
@@ -1615,8 +1639,14 @@
     // =============================================
     // 📥 載入 Google Sheet
     // =============================================
-    async function loadFromSheet() {
-      document.getElementById('grid').innerHTML = '<div class="empty-state">⏳ 載入資料中...</div>';
+    async function loadFromSheet(opts) {
+      opts = opts || {};
+      const silent = !!opts.silent;
+      const trigger = opts.trigger || 'initial'; // 'initial' | 'auto' | 'pull'
+      lastFetchTime = Date.now();
+      if (!silent) {
+        document.getElementById('grid').innerHTML = '<div class="empty-state">⏳ 載入資料中...</div>';
+      }
       try {
         const response = await fetch(SHEET_CSV_URL);
         const csvText = await response.text();
@@ -2864,6 +2894,86 @@
         });
       });
       closeBtn?.addEventListener('click', () => dismiss('close_x'));
+    })();
+
+    // =============================================
+    // 🔄 回到前景自動刷新（節流）
+    // =============================================
+    function maybeAutoRefresh() {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - lastFetchTime < REFRESH_THROTTLE_MS) return;
+      // GA: auto_refresh（通過節流門檻、真的觸發背景刷新）
+      gtag('event', 'auto_refresh', { device: getDeviceType() });
+      loadFromSheet({ silent: true, trigger: 'auto' });
+    }
+    document.addEventListener('visibilitychange', maybeAutoRefresh);
+    // 部分瀏覽器（尤其是舊版 iOS Safari／某些 in-app browser）visibilitychange 不夠可靠，focus 當備援
+    window.addEventListener('focus', maybeAutoRefresh);
+
+    // =============================================
+    // 👇 下拉刷新（僅列表模式，#gridView 捲到頂時才觸發）
+    // =============================================
+    (function initPullToRefresh() {
+      const container = document.getElementById('gridView');
+      const indicator = document.getElementById('ptrIndicator');
+      const spinner = indicator.querySelector('.ptr-spinner');
+      const PULL_TRIGGER_PX = 60;   // 拉到這個高度放開才觸發刷新
+      const PULL_MAX_PX = 90;       // 視覺上限（rubber-band）
+      const DAMPING = 0.5;          // 手指移動距離的實際反映比例
+
+      let startY = 0;
+      let pulling = false;   // 這次觸控是否正在做下拉手勢
+      let dragY = 0;
+      let refreshing = false;
+
+      function setIndicatorHeight(px) {
+        indicator.style.height = px + 'px';
+        spinner.style.transform = `rotate(${Math.min(px / PULL_TRIGGER_PX, 1) * 360}deg)`;
+      }
+
+      container.addEventListener('touchstart', (e) => {
+        if (refreshing) return;
+        // 只有捲到最頂端時，往下拉才可能是「刷新」而不是一般捲動
+        if (container.scrollTop > 0) { pulling = false; return; }
+        startY = e.touches[0].clientY;
+        pulling = true;
+        dragY = 0;
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        if (!pulling || refreshing) return;
+        const diff = e.touches[0].clientY - startY;
+        // 手指往上滑，或列表本身已經被滑走了，就取消手勢，交還給正常捲動
+        if (diff <= 0 || container.scrollTop > 0) { pulling = false; setIndicatorHeight(0); return; }
+        dragY = Math.min(diff * DAMPING, PULL_MAX_PX);
+        setIndicatorHeight(dragY);
+        e.preventDefault(); // 手勢確定成立時才擋掉，避免吃掉一般捲動
+      }, { passive: false });
+
+      container.addEventListener('touchend', () => {
+        if (!pulling) return;
+        pulling = false;
+        if (dragY >= PULL_TRIGGER_PX) {
+          refreshing = true;
+          indicator.classList.add('loading');
+          setIndicatorHeight(PULL_TRIGGER_PX);
+          // GA: pull_to_refresh（下拉超過門檻放開，真的觸發刷新）
+          gtag('event', 'pull_to_refresh', { device: getDeviceType() });
+          loadFromSheet({ silent: true, trigger: 'pull' }).finally(() => {
+            refreshing = false;
+            indicator.classList.remove('loading');
+            setIndicatorHeight(0);
+          });
+        } else {
+          setIndicatorHeight(0);
+        }
+      });
+
+      container.addEventListener('touchcancel', () => {
+        if (refreshing) return;
+        pulling = false;
+        setIndicatorHeight(0);
+      });
     })();
 
     // =============================================
