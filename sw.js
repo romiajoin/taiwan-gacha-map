@@ -7,7 +7,7 @@
 // 版本號 bump 時（CACHE_VERSION 改掉），install/activate 會自動清掉舊快取，
 // 不需要手動處理使用者端的快取殘留。
 
-const CACHE_VERSION = 'v24';
+const CACHE_VERSION = 'v28';
 const SHELL_CACHE = `cardradar-shell-${CACHE_VERSION}`;
 const DATA_CACHE = `cardradar-data-${CACHE_VERSION}`;
 const IMAGE_CACHE = `cardradar-images-${CACHE_VERSION}`;
@@ -45,6 +45,13 @@ self.addEventListener('activate', (event) => {
 
 function isDataRequest(url) {
   return url.hostname === 'docs.google.com' && url.pathname.includes('/spreadsheets/');
+}
+
+// changelog.json 內容會不定期增加新條目，但改動它通常不會跟著 bump CACHE_VERSION
+// （不是shell殼層檔案的改版），所以要跟 Google Sheet 資料一樣走 network-first，
+// 不然已安裝 PWA 的使用者要等到下次真的動到 index.html/css/js 才會看到新的更新日誌紀錄
+function isChangelogRequest(url) {
+  return url.pathname.endsWith('/changelog.json');
 }
 
 function isImageRequest(url) {
@@ -89,6 +96,11 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
 
   if (isDataRequest(url)) {
+    event.respondWith(networkFirst(request, DATA_CACHE));
+    return;
+  }
+
+  if (isChangelogRequest(url)) {
     event.respondWith(networkFirst(request, DATA_CACHE));
     return;
   }

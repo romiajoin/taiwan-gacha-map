@@ -8,8 +8,9 @@
 import { isStandaloneMode, getDeviceType } from './utils.js';
 import { renderGrid, sortLocations, getEndingBadge } from './grid.js';
 import { renderSortControl, closeDesktopSortPanel, closeMobileSortSheet } from './sort.js';
-import { buildFilterOptions, renderFilterBar } from './filters.js';
+import { buildFilterOptions, renderFilterBar, FILTER_CONFIG, filterState } from './filters.js';
 import { map, renderMapLocations, initMap, initBottomSheet, applySheetLevel, sheetLevel, isMobileMapLayout, openMobileSheetSummary, openDesktopSidebar } from './map.js';
+import { initTopBarScroll, resetTopBarScrollState } from './scroll.js';
 
     const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQgBZrLfJlb-JY9YGm3o9vX5w3jG9hojq5E79tStxW1g89rKpuMnaRi1vA833KmZbilAAv9vrhttqQh/pub?gid=0&single=true&output=csv';
 
@@ -40,6 +41,7 @@ import { map, renderMapLocations, initMap, initBottomSheet, applySheetLevel, she
       document.getElementById('gridView').classList.toggle('active', view === 'grid');
       document.getElementById('mapView').classList.toggle('active', view === 'map');
       document.body.classList.toggle('map-view', view === 'map');
+      resetTopBarScrollState();
 
       // GA: view_toggle（跳過頁面初始化那次）
       if (viewInitialized) {
@@ -85,6 +87,21 @@ import { map, renderMapLocations, initMap, initBottomSheet, applySheetLevel, she
     }
 
     // =============================================
+    // 🕐 最後更新時間：Google Sheet 儲存格原始格式是 12 小時制（例如「2026/7/14 下午8:33:00」），
+    // 這裡轉成 24 小時制顯示，順便拿掉秒數（更新時間精確到秒沒有實際意義，字也短一點）。
+    // 格式跟預期不符（例如 Sheet 那格被手動改成別的格式）就直接回傳原字串，不讓整個「最後更新」消失。
+    // =============================================
+    function to24Hour(raw) {
+      const match = raw.match(/^(\d{4}\/\d{1,2}\/\d{1,2})\s*(上午|下午)\s*(\d{1,2}):(\d{2})(?::\d{2})?$/);
+      if (!match) return raw;
+      const [, datePart, ampm, hStr, mStr] = match;
+      let h = parseInt(hStr, 10);
+      if (ampm === '下午' && h !== 12) h += 12;
+      if (ampm === '上午' && h === 12) h = 0;
+      return `${datePart} ${String(h).padStart(2, '0')}:${mStr}`;
+    }
+
+    // =============================================
     // 📥 載入 Google Sheet
     // =============================================
     export async function loadFromSheet(opts) {
@@ -102,7 +119,7 @@ import { map, renderMapLocations, initMap, initBottomSheet, applySheetLevel, she
 
         const firstRow = parseCSVRow(rows[1] || '');
         const lastUpdated = firstRow[15] || '';
-        const lastUpdatedText = lastUpdated ? '最後更新：' + lastUpdated : '社群共建 · 持續更新';
+        const lastUpdatedText = lastUpdated ? '最後更新：' + to24Hour(lastUpdated) : '社群共建 · 持續更新';
         ['lastUpdated', 'listLastUpdated'].forEach(id => {
           const el = document.getElementById(id);
           if (el) el.textContent = lastUpdatedText;
@@ -512,6 +529,7 @@ window.trackGmapsClick = trackGmapsClick;
 window.shareLocation = shareLocation;
 
     // 初始化
+    initTopBarScroll();
     setView('grid');
     loadFromSheet();
 

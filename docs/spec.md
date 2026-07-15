@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/07/13（v24）
+**最後更新：** 2026/07/14（v26）
 
 ---
 
@@ -65,6 +65,7 @@
 - 資料來源：counterapi.dev（`cardradartw/visits`），page view 計數（每次載入 +1）
 - API 失敗時靜默隱藏，不影響其他功能
 - v22 修正：曾被 Service Worker 誤快取導致數字凍結（`sw.js` catch-all 規則把 counter API 也當成殼層資源快取），改為指定該請求繞過快取、每次都真的打網路，詳見 `CLAUDE.md`
+- v26 起：mobile 列表模式下併入頂部工具列，跟 header/toolbar/filter-bar 一起滑動隱藏/顯示，見下方「列表模式（Grid View）」
 
 ### Header
 - 右側由左至右：最後更新時間 ｜ 回報表單 　[列表][地圖]
@@ -125,9 +126,10 @@
 
 ### PWA / 加到主畫面（A2HS Banner，v21 新增）
 - **manifest.json**：`name`/`short_name`、`theme_color: #0066FF`、`background_color: #F2F2F7`、`display: standalone`；圖示 `icon-192.png`/`icon-512.png`/`icon-maskable-512.png`（maskable 沿用一般版本，logo 本身留白已在安全區內）、另加 `apple-touch-icon.png`
-- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`；v24 起 `CACHE_VERSION = 'v24'`
+- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`；v26 起 `CACHE_VERSION = 'v26'`
 - **自動刷新（v24 新增）**：回到前景（`visibilitychange`/`focus`）時，若距上次成功抓取超過 30 分鐘（`REFRESH_THROTTLE_MS`），靜默刷新資料（不清空列表、失敗只顯示 toast）；節流是為了避免短時間切來切去連打 API
 - **下拉刷新（v24 新增）**：列表模式（`#gridView`）捲到頂端時，往下拉超過 60px 放開即觸發刷新；繞過節流（使用者主動操作，應無條件給最新資料）；地圖模式不支援（手勢衝突）
+  - v26.1 修正：spinner 曾因 CSS animation 起點跟殘留 inline transform 疊在一起，導致轉圈動畫視覺上卡住不動、體感是「卡一下就直接收回」，詳見 `CLAUDE.md`
 - **顯示時機**：累計「查看詳情」次數（grid 詳情 + 地圖單一 marker）達 3 次（跨造訪永久累計，存 `localStorage`），或單次瀏覽停留超過 20 秒，兩者擇一觸發；不依賴瀏覽器自身的 `beforeinstallprompt` 時機判斷或 iOS 固定延遲
 - **平台差異**：Android 按鈕觸發原生安裝流程（仍受限於瀏覽器何時發出 `beforeinstallprompt`）；iOS + Safari 顯示教學文案；iOS + 非 Safari（LINE/IG/FB 內嵌瀏覽器）先引導「用 Safari 開啟」
 - **關閉退避**：關過 3 次永久不再顯示，每次關閉後間隔 14 天才再問一次
@@ -155,6 +157,8 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - 卡片半透明背景 `rgba(235,235,245,0.16)`，hover 顯示黃色邊框
 - Tags：白色文字 + 白色邊框 + 半透明背景
 - 「詳情」按鈕：青色實心 `#00c2a8`，黑色文字，↗ 圖示，點擊開啟彈窗
+- **mobile 頂部工具列滑動隱藏（v26 新增）**：header + toolbar + filter-bar + 訪客計數 banner（`#topBar`）在手機列表模式下往下滑隱藏、往上滑（哪怕滑一點點）立刻出現，捲到頂端附近一律保持顯示；只在列表模式生效，地圖模式的工具列維持原本 static，不會跟著滑動
+- **filter-bar 到第一張卡片的間距（v26 調整）**：mobile 列表模式下為 12px（原本 24px，filter-bar 自身 padding-bottom 在列表模式歸零）；地圖模式的 filter-bar 間距未變動
 
 ### 地圖模式詳情面板（v20 重做，v23 大幅改版）
 **桌面版**

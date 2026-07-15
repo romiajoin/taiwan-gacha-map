@@ -58,10 +58,10 @@
 </head>
 <body>
 
+  <div class="top-bar" id="topBar">
   <div class="visitor-banner" id="visitorBanner" style="display:none;">
     已經有 <span id="visitorCount">⋯</span> 人來找過抽卡機
   </div>
-
   <header>
     <div class="logo">
       <img class="logo-icon" src="logo.svg" alt="logo" />
@@ -71,6 +71,8 @@
       <div class="header-info" id="lastUpdated"></div>
       <div class="header-divider"></div>
       <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
+      <div class="header-divider"></div>
+      <a href="#" class="changelog-link" id="changelogLinkDesktop">更新日誌</a>
       <div class="view-toggle">
         <button class="view-btn" id="btnGrid" onclick="setView('grid')" aria-label="切換到列表檢視"><svg xmlns="http://www.w3.org/2000/svg" height="20px" viewBox="0 -960 960 960" width="20px" fill="currentColor"><path d="M324-600q-15.3 0-25.65-10.29Q288-620.58 288-635.79t10.35-25.71Q308.7-672 324-672h456q15.3 0 25.65 10.29Q816-651.42 816-636.21t-10.35 25.71Q795.3-600 780-600H324Zm0 156q-15.3 0-25.65-10.29Q288-464.58 288-479.79t10.35-25.71Q308.7-516 324-516h456q15.3 0 25.65 10.29Q816-495.42 816-480.21t-10.35 25.71Q795.3-444 780-444H324Zm0 156q-15.3 0-25.65-10.29Q288-308.58 288-323.79t10.35-25.71Q308.7-360 324-360h456q15.3 0 25.65 10.29Q816-339.42 816-324.21t-10.35 25.71Q795.3-288 780-288H324ZM180-600q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-636q0 14-10.35 25T180-600Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-480q0 14-10.35 25T180-444Zm0 156q-14 0-25-11t-11-25.5q0-14.5 11-25t25.5-10.5q14.5 0 25 10.35T216-324q0 14-10.35 25T180-288Z"/></svg> <span class="label">列表</span></button>
         <button class="view-btn" id="btnMap" onclick="setView('map')" aria-label="切換到地圖檢視">
@@ -97,6 +99,9 @@
   </div>
 
   <div class="filter-bar" id="filterBar"></div>
+  </div>
+  <!-- /#topBar -->
+
   <div class="filter-sheet-overlay" id="filterSheetOverlay">
     <div class="filter-sheet" id="filterSheet" onclick="event.stopPropagation()">
       <div class="filter-sheet-header">
@@ -129,6 +134,8 @@
         <div class="last-updated-list" id="listLastUpdated"></div>
         <div class="header-divider"></div>
         <a href="https://docs.google.com/forms/d/e/1FAIpQLSefuFSIqJ3qbJ245-snAD5MR6xHYHhkzzGGtpNXBvUVyZoZWQ/viewform?usp=dialog" class="report-link" target="_blank" rel="noopener">回報表單</a>
+        <div class="header-divider"></div>
+        <a href="#" class="changelog-link" id="changelogLinkMobile">更新日誌</a>
       </div>
       <div class="grid" id="grid">
         <div class="empty-state">⏳ 載入資料中...</div>
@@ -161,6 +168,23 @@
     </div>
   </div>
 
+  <!-- Changelog Modal（桌機）／Bottom Sheet（手機）-->
+  <div class="changelog-overlay" id="changelogOverlay" onclick="closeChangelog(event)">
+    <div class="changelog-panel" onclick="event.stopPropagation()">
+      <div class="changelog-header">
+        <div class="changelog-header-text">
+          <span class="changelog-title">更新日誌</span>
+          <span class="changelog-author">made with ♥ by @yywggwyy</span>
+        </div>
+        <button class="changelog-close" id="changelogClose" aria-label="關閉"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+      </div>
+      <div class="changelog-body" id="changelogBody">
+        <div class="empty-state">⏳ 載入中...</div>
+      </div>
+    </div>
+  </div>
+
+
   <div id="share-toast"></div>
 
   <!-- A2HS（加到主畫面）Banner -->
@@ -177,11 +201,13 @@
   </div>
 
   <script type="module" src="js/main.js"></script>
+  <script type="module" src="js/changelog.js"></script>
   <script type="module" src="js/grid.js"></script>
   <script type="module" src="js/sort.js"></script>
   <script type="module" src="js/map.js"></script>
   <script type="module" src="js/filters.js"></script>
   <script type="module" src="js/pwa.js"></script>
   <script type="module" src="js/visitor.js"></script>
+  <script type="module" src="js/scroll.js"></script>
 </body>
 </html>

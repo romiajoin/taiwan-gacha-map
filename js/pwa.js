@@ -220,7 +220,12 @@ import { loadFromSheet, lastFetchTime, REFRESH_THROTTLE_MS } from './main.js';
         if (dragY >= PULL_TRIGGER_PX) {
           refreshing = true;
           indicator.classList.add('loading');
-          setIndicatorHeight(PULL_TRIGGER_PX);
+          indicator.style.height = PULL_TRIGGER_PX + 'px';
+          // 不能再呼叫 setIndicatorHeight() 設角度——它會把 spinner 的 inline transform
+          // 設成 rotate(360deg)，跟 .loading 的 CSS animation（0.7s linear infinite，
+          // 終點也是 360deg）同一 tick 生效時，動畫起點＝終點，视觉上完全不會轉，
+          // 看起來就是「卡住不動」。清空 inline transform，讓 animation 從乾淨的 0deg 開始轉。
+          spinner.style.transform = '';
           // GA: pull_to_refresh（下拉超過門檻放開，真的觸發刷新）
           gtag('event', 'pull_to_refresh', { device: getDeviceType() });
           loadFromSheet({ silent: true, trigger: 'pull' }).finally(() => {

@@ -35,6 +35,7 @@ js/
   filters.js         # 篩選 UI：pill／dropdown／bottom sheet
   sort.js             # 排序 UI：按鈕／dropdown／bottom sheet + 定位權限
   grid.js             # 列表卡片渲染 + 排序邏輯（getEndDate/getEndingBadge/sortLocations）
+  scroll.js           # #topBar（header/toolbar/filter-bar/訪客 banner）mobile 列表模式滑動隱藏/顯示（v26 新增）
   pwa.js              # A2HS banner／自動刷新／下拉刷新／Service Worker 註冊
   utils.js            # isStandaloneMode／getDeviceType（零依賴）
   visitor.js          # 訪客計數（零依賴）
@@ -236,6 +237,7 @@ function fitOptionsWidth(container) {
 - **下拉刷新**：touch 手勢掛在 `#gridView`（列表模式的捲動容器），`scrollTop === 0` + 往下拉超過 60px（`PULL_TRIGGER_PX`）放開才觸發；視覺上用 `.ptr-indicator` / `.ptr-spinner` 顯示進度；`loadFromSheet({ silent: true, trigger: 'pull' })`，繞過節流（使用者主動操作不應被擋）
 - **`silent` 模式**：不清空列表成「載入中」畫面，失敗時只用 toast 提示「更新失敗，請稍後再試」，不覆蓋使用者正在看的內容；初次載入不屬於 silent（`trigger: 'initial'`）
 - **`!silent` guard on `?id=` handler**：`loadFromSheet()` 裡偵測分享連結的邏輯只在 `!silent` 時跑，避免背景刷新不斷把使用者已關掉的詳情彈窗重新彈出來
+- **⚠️ v26.1 修正：spinner 卡住不轉、體感卡頓後直接收回**（bug 在 v26 期間發現並修好，但 v26 已經 push 上線、需要靠 `CACHE_VERSION` 再 bump 一次才能讓已快取的使用者拿到修好的檔案，詳見「Service Worker 快取版本管理」的 v26.1 條目）——根因是 `touchend` 觸發 loading 狀態時，`indicator.classList.add('loading')` 加上 CSS `animation: ptr-spin 0.7s linear infinite`（終點 `transform: rotate(360deg)`，沒寫 `from`）的**同一個 tick**，又呼叫 `setIndicatorHeight(PULL_TRIGGER_PX)` 把 spinner 的 inline `transform` 設成 `rotate(360deg)`——瀏覽器抓「animation 沒寫 from 時的隱含起點」是「動畫開始那一刻元素的當下計算值」，剛好也是 `360deg`，等於整段動畫是「從 360 度轉到 360 度」，視覺上完全不動；`loadFromSheet()` resolve 後 `.finally()` 拿掉 `.loading`、收回高度，體感就是「卡住不轉，然後直接收回」。修法：進入 loading 狀態時改成 `indicator.style.height = ...`（只設高度）+ `spinner.style.transform = ''`（清空殘留角度），讓 CSS animation 從乾淨的 `0deg` 起點開始轉，不呼叫會連帶設角度的 `setIndicatorHeight()`
 
 ### 排序後捲動重置（v24 新增）
 - `applySortState()` 在 `renderGrid()` 之後，額外把 `#gridView`（列表模式）和 `.map-scroll-wrapper`（地圖模式側欄/sheet）的 `scrollTop` 重設為 0；排序＝重新給名次，捲動位置停在原地等於使用者看到的已經是不同排序下的名次，體驗上很混亂
@@ -268,6 +270,9 @@ function fitOptionsWidth(container) {
   1. `CACHE_VERSION` 改成對齊 release 版號（`'v24'`），之後每次 release 只要動到 `SHELL_ASSETS` 清單裡的檔案（`index.html`、`manifest.json`、`favicon.svg`，或更新 Leaflet CDN 版本號）就要同步 bump，維持整數格式（`v25`、`v26`...），不用語意化版本
   2. 新增 `vercel.json`，對 `/sw.js`、`/`、`/index.html` 都設 `Cache-Control: no-cache, no-store, must-revalidate`，確保瀏覽器每次都重新抓這幾個檔案去比對，不會被一般 HTTP cache 擋掉 SW 的更新偵測
   3. 因為 `sw.js` 本身已經 no-cache，之後只調整 `fetch` handler 內部邏輯（不影響 `SHELL_ASSETS` 清單）而不動 `CACHE_VERSION` 也沒關係——瀏覽器會自己偵測到 `sw.js` 檔案 byte 不同、觸發新版安裝
+- **2026/07 補充（`CACHE_VERSION` 跟對外版本號脫鉤）**：`CACHE_VERSION` 判斷要不要 bump，只看「這次改動有沒有動到 `SHELL_ASSETS` 清單裡任一檔案的 bytes」，跟這次改動在語意上算不算一個值得對外公布的版本（README/Notion 那個 v24、v25）無關——即使是純架構重構、沒有任何使用者可見的功能變化（例如 2026/07 從單一 `index.html` 拆成 ES Modules，`index.html` 內容本身變了），只要動到 `SHELL_ASSETS`，`CACHE_VERSION` 一樣要 bump，不然已安裝 PWA 的舊使用者會持續吃到快取住的舊殼層。這次剛好兩邊都遞增到同一個數字（`v25`）純屬巧合，不代表兩套編號以後永遠對得上——`CACHE_VERSION` 是機械式開關，Notion/README 的版本號才是語意判斷
+- **v26**：`index.html`（`#topBar` wrapper 結構）、`style.css`、`js/main.js` 都改了，`index.html` 在 `SHELL_ASSETS` 清單裡，因此 bump；`style.css`／`js/main.js`／新增的 `js/scroll.js` 本來就不在 `SHELL_ASSETS`，靠 catch-all 的 `cacheFirst` 規則自然重抓，不受影響但仍受惠於這次 bump（`activate` 會整組清掉舊版 `SHELL_CACHE`，這些檔案也會一起變成 cache miss，強制重新打網路抓最新版本）
+- **v26.1**：`v26` 已經 push 上線之後，才發現並修好 `js/pwa.js` 下拉刷新 spinner 的 bug（見「PWA 自動刷新 + 下拉刷新」）——這代表已經有使用者的 `cardradar-shell-v26` 快取住了有 bug 的舊版 `pwa.js`，即使把修好的檔案 push 上去，`CACHE_VERSION` 字串沒變、快取名稱沒變，`cache-first` 還是會命中舊快取，不會重新抓。這次沒有對應的新對外版號（README/Notion 仍算 v26 這個 release 的一部分），純粹需要一個「沒出現過的新字串」去觸發 `activate` 清快取，因此用 `'v26.1'`——再次印證 `CACHE_VERSION` 是機械式開關，只看「需不需要讓已快取的使用者重新抓檔案」，跟對外版本號語意上算不算一個新版本無關
 - 純資料更新（Google Sheet 內容變動）不受影響，本來就是走 `DATA_CACHE` 的 network-first
 
 ### 倒數 Badge（v23 新增）
@@ -344,11 +349,25 @@ function fitOptionsWidth(container) {
 - 建議優先使用 Cloudinary，Drive 直連長期不穩定
 
 ### 訪客計數 Banner
-- 位置：header 正上方，全寬，文字置中
+- 位置：`#topBar` 內、header 正上方，全寬，文字置中；v26 起併入 `#topBar`，mobile 列表模式下跟 header/toolbar/filter-bar 一起滑動隱藏/顯示（見下方「#topBar 滑動隱藏（v26 新增）」）
 - API：`GET https://api.counterapi.dev/v1/cardradartw/visits/up`（每次載入 +1）
-- 計數方式：page view（非 unique visitor）
+- 計數方式：page view（非 unique visitor）；曾討論過要不要用 `localStorage` 旗標做「同一瀏覽器不重複計」，結論是不做——現有語意就是「次數」而非嚴謹去重，真要看 unique visitor 直接查 GA4 後台的「使用者數」即可，不必為了公開 banner 多背一套邏輯
 - API 失敗時 banner 靜默隱藏，不影響其他功能
 - **⚠️ v22 修正：曾被 SW 誤快取導致數字凍結**——`sw.js` 的 `fetch` handler 裡，`isDataRequest`／`isImageRequest` 都判斷不到的請求會全部掉進最後的 catch-all，用 `cacheFirst(request, SHELL_CACHE)` 處理，counter API 也符合這個條件，導致第一次呼叫後就被快取住，之後每次 refresh 都拿到快取的舊回應，人數永遠不會增加。修法是新增 `isNoCacheRequest(url)`，判斷 `url.hostname === 'api.counterapi.dev'`，符合的請求直接 `fetch(request)` 繞過快取，不進 `cacheFirst`
+
+### #topBar 滑動隱藏（v26 新增）
+- **範圍**：header + toolbar + `#filterBar` + 訪客計數 banner 包成 `#topBar` 一個 wrapper；只在 `max-width: 768px` **且** `body:not(.map-view)`（列表模式）生效——地圖模式下 `#topBar` 維持原本 static flow，`position`／高度完全不受影響，因為 `map.js` 的 mobile bottom sheet `full` 高度是動態貼齊 filter-bar 下緣算出來的（見「Mobile Map Bottom Sheet」），改動這個會牽一髮動全身
+- **實作方式**：`#topBar` 在生效範圍內改 `position: fixed; top:0`，用 `transform: translateY(-100%)` 做隱藏，而不是 `max-height` 動畫——`max-height` 過渡時，畫面高度會先跟著實際內容走、直到動畫值低於內容高度才「突然」開始收合，觀感是「捲了一段才卡一下才開始消失」，`transform` 沒有這個問題
+- **滑動判斷邏輯**（`js/scroll.js`，監聽 `#gridView` 的 `scroll`，不是 window scroll，因為捲動容器是 `#gridView` 本身）：
+  - 往下滑：累積 delta 超過 `HIDE_THRESHOLD`（8px）才隱藏，避免手抖誤觸
+  - 往上滑：delta 一有負值就立刻顯示，不設門檻（對應「哪怕滑一點點」的需求）
+  - 捲動位置在 `TOP_SAFE_ZONE`（頂部 24px）內一律強制顯示，避免捲到頂端時因為零星 delta 抖動
+- **`#gridView` 的 `padding-top`**：因為 `#topBar` 變成 `fixed`（脫離文件流），`#gridView` 要保留對應高度避免第一批卡片被蓋住，寫成 `calc(12px + var(--top-bar-height, 0px))`；`--top-bar-height` 這個 CSS variable 由 `js/scroll.js` 動態量測 `#topBar.getBoundingClientRect().height` 寫入，**不是寫死的數字**
+  - **量測時機的坑**：訪客計數 banner 是非同步出現的（`visitor.js` 抓到人數後才把 `display:none` 打開），如果只在 `resize` 時重新量測，banner 突然跳出來的那一瞬間高度會沒跟上、內容被蓋住一小段。改用 `ResizeObserver` 直接盯 `#topBar` 本身的尺寸變化，banner 出現、螢幕旋轉、未來任何內容變動都會自動觸發重新量測，不用為每個成因各自補監聽
+- **`setView()` 切換時**：呼叫 `resetTopBarScrollState()`（`js/scroll.js` export），確保切到地圖模式或切回列表時 bar 狀態一定重置成可見、高度重新量測乾淨，不會殘留「切換前恰好處於隱藏狀態」的殘影
+- **z-index**：`#topBar` 用 `250`，比 header 原本的 `200` 高一點但遠低於 filter/sort sheet（2200/2201）跟各種 modal（9999+），不會蓋過那些主動觸發的互動層，見「面板/sheet 疊層順序」段落，之後新增 fixed 定位元素記得先看這裡列的所有 z-index 值
+- **mobile 列表模式間距（v26 調整）**：filter-bar 底部到第一張卡片的距離，從原本 `.filter-bar` 的 `padding-bottom: 12px` + `#gridView` 的 `padding-top: 12px` 疊加成 24px，改成只留 `#gridView` 自己的 12px——`body:not(.map-view) .filter-bar { padding-bottom: 0; }`，只在列表模式生效，地圖模式的 `.filter-bar` 維持原本 12px（`full` sheet 高度計算依賴這個值，不能動）
+- **GA**：評估過不加新事件——這是捲動手勢驅動的連續 UI 動畫，跟現有事件（`view_toggle`、`card_click` 等）對應「明確使用者意圖」的性質不同，硬加會產生大量低價值事件，還會排擠 GA4 免費額度裡真正重要事件的採樣
 
 ### Header 順序（PC）
 `最後更新時間 ｜ 回報表單 　[列表][地圖]`

@@ -198,7 +198,7 @@ import { map, renderMapLocations } from './map.js';
       updateSortDisplay();
       closeDesktopSortPanel();
       closeMobileSortSheet();
-      currentFiltered = sortLocations(currentFiltered);
+      setCurrentFiltered(sortLocations(currentFiltered));
       renderGrid(currentFiltered);
       if (map) renderMapLocations(currentFiltered);
 

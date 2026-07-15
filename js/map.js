@@ -369,8 +369,17 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
     export function applySheetLevel(level) {
       sheetLevel = level;
       const sidebar = document.querySelector('.sidebar');
-      sidebar.style.height = levelHeightPx(level) + 'px';
-      renderMobileSheetContent();
+      if (level === 'full' && sheetLoc) {
+        // 拖到 full 時如果正在看詳情：跟 preferFull 分支共用同一套「內容沒那麼高就貼合、
+        // 不留白」的規則，而不是無腦套用固定的 levelHeightPx('full')。
+        renderMobileSheetContent();
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => { fitDetailToTarget('full'); });
+        });
+      } else {
+        sidebar.style.height = levelHeightPx(level) + 'px';
+        renderMobileSheetContent();
+      }
       if (map) setTimeout(() => map.invalidateSize(), 320);
     }
 
@@ -405,6 +414,42 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
       applyMobileDetailHeight({ preferFull: opts && opts.preferFull });
     }
 
+    // ---- 共用：量測目前 sheetLoc 詳情內容的實際高度 ----
+    // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成），
+    // 呼叫端要負責用兩層 rAF 包起來再呼叫這個函式，確保量到的是排版後的真實高度。
+    function measureSheetContentHeight() {
+      const handle = document.querySelector('.sheet-handle');
+      const handleH = handle ? handle.getBoundingClientRect().height : 0;
+      const list = document.getElementById('locationList');
+      const peek = levelHeightPx('peek');
+      if (!list) return peek;
+      // 量到的內容高度不能小於 peek：不管是量測時機不巧、還是內容本身真的很短，
+      // sheet（跟拉桿）都不能塌到比 peek 還矮，不然使用者連拉桿都碰不到，等於拖曳完全失效。
+      return Math.max(list.scrollHeight + handleH, peek);
+    }
+
+    // ---- 共用：把詳情內容「撐到某個目標層級」時，決定實際要用的高度 ----
+    // 內容矮於目標高度：貼合內容實際高度，進 content 狀態，不留白。
+    // 內容夠高（或超過）：才真的撐滿目標高度（超過的部分靠 sheet 內捲動看完）。
+    // preferFull（分享連結進來）跟手動拖曳到 full，都要吃到同一套「不留白」規則，
+    // 不能各自寫一份，不然又會變回其中一條路徑忘記套用。
+    function fitDetailToTarget(targetLevel) {
+      const sidebar = document.querySelector('.sidebar');
+      if (!sidebar) return;
+      const contentH = measureSheetContentHeight();
+      const targetH = levelHeightPx(targetLevel);
+      const fitH = Math.min(contentH, targetH);
+      if (fitH < targetH) {
+        sheetContentMaxHeight = fitH;
+        sheetLevel = 'content';
+        sidebar.style.height = fitH + 'px';
+      } else {
+        sheetContentMaxHeight = null;
+        sheetLevel = targetLevel;
+        sidebar.style.height = targetH + 'px';
+      }
+    }
+
     // ---- 詳情開啟時的高度：內容撐不滿 mid（裝置高 0.32）就縮到內容實際高度，不留空白，
     // 這種情況拖曳最高也只能到這個高度（sheetContentMaxHeight），不會拉到 full；
     // 撐得滿或更高就開在 mid，可再手動拖到 full 捲動看完 ----
@@ -418,17 +463,10 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
       // 切換到新的詳情內容，內部捲動位置要回到最上面，不要沿用上一筆看到一半的位置。
       if (scrollWrapper) scrollWrapper.scrollTop = 0;
       sidebar.style.transition = 'none';
-      // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成）；
-      // 用兩層 rAF 確保量到的是排版後的真實高度，避免量到還沒定案的中間值。
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
-          const handle = document.querySelector('.sheet-handle');
-          const handleH = handle ? handle.getBoundingClientRect().height : 0;
           const mid = levelHeightPx('mid');
-          const peek = levelHeightPx('peek');
-          // 量到的內容高度不能小於 peek：不管是量測時機不巧、還是內容本身真的很短，
-          // sheet（跟拉桿）都不能塌到比 peek 還矮，不然使用者連拉桿都碰不到，等於拖曳完全失效。
-          const contentH = Math.max(list.scrollHeight + handleH, peek);
+          const contentH = measureSheetContentHeight();
           if (contentH < mid) {
             // 內容本來就比 mid 矮：維持貼合內容高度，就算 preferFull 也不用硬撐到 full，
             // 不然下面只會多出一大塊空白，反而更難看。
@@ -436,20 +474,8 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
             sheetLevel = 'content';
             sidebar.style.height = contentH + 'px';
           } else if (preferFull) {
-            // 分享連結進來：盡量一次看到完整內容，但高度還是貼合實際內容，
-            // 不是無腦撐死到 full 的固定高度——不然內容比 full 矮的話，下面一樣會空一大塊。
-            // 只有內容真的長到超過 full 的上限，才封頂在那個上限（此時本來就得靠捲動看完）。
-            const fullH = levelHeightPx('full');
-            const fitH = Math.min(contentH, fullH);
-            if (fitH < fullH) {
-              sheetContentMaxHeight = fitH;
-              sheetLevel = 'content';
-              sidebar.style.height = fitH + 'px';
-            } else {
-              sheetContentMaxHeight = null;
-              sheetLevel = 'full';
-              sidebar.style.height = fullH + 'px';
-            }
+            // 分享連結進來：盡量一次看到完整內容，交給共用的 fitDetailToTarget 決定要不要貼合。
+            fitDetailToTarget('full');
           } else {
             sheetContentMaxHeight = null; // 內容夠高，維持一般的 mid/full 兩檔可拖
             sheetLevel = 'mid';
