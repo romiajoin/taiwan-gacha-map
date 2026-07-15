@@ -7,7 +7,7 @@
 
 import { getDeviceType } from './utils.js';
 import { renderGrid, sortLocations } from './grid.js';
-import { isMobileFilterLayout, closeMobileFilterSheet } from './filters.js';
+import { isMobileFilterLayout, closeMobileFilterSheet, closeDesktopPanels } from './filters.js';
 import { currentFiltered, setCurrentFiltered } from './main.js';
 import { map, renderMapLocations } from './map.js';
 

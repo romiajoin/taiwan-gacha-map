@@ -285,7 +285,7 @@ import { renderSortControl, closeDesktopSortPanel, closeMobileSortSheet } from '
       gtag('event', 'filter_panel_open', { filter_type: key, device: getDeviceType() });
     }
 
-    function closeDesktopPanels(skipTracking) {
+    export function closeDesktopPanels(skipTracking) {
       if (openPanelKey && !skipTracking) {
         // GA: filter_panel_close
         gtag('event', 'filter_panel_close', {

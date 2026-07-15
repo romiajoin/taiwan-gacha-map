@@ -39,7 +39,9 @@ js/
   pwa.js              # A2HS banner／自動刷新／下拉刷新／Service Worker 註冊
   utils.js            # isStandaloneMode／getDeviceType（零依賴）
   visitor.js          # 訪客計數（零依賴）
+  changelog.js        # 更新日誌 modal/sheet：讀取 changelog.json、渲染、開關、GA event（v27 新增）
 api/share.js          # 不受影響,原本就是獨立檔案
+changelog.json         # 更新日誌資料，根目錄，跟 manifest.json 同層（v27 新增）
 ```
 
 **跨檔案依賴要注意**：這幾個模組之間互相 `import`，部分是循環依賴（例如 `main.js` 跟 `map.js` 互相 import 對方的東西）——這是刻意設計，函式宣告在 ES Modules 裡會在模組載入時就先掛好，不會因為互相 import 而抓不到，但**新增跨檔案呼叫時要留意這個限制**：
@@ -125,7 +127,7 @@ Token 只顯示一次，外洩需立即到 GitHub Settings 撤銷並重新產生
   - `full`：動態計算，抓 `#filterBar` 的 `getBoundingClientRect().bottom + 8` 當上限，`window.innerHeight - 上限`，確保不會蓋住搜尋框/篩選器
 - **預設狀態（`sheetLoc` 為 null）**：顯示可捲動的地點卡片列表（`buildSidebarListCardHtml` + `bindSidebarListCardEvents`，跟桌機、grid 共用同一套卡片渲染），取代 v20 版的提示文字
 - **詳情內容依實際高度決定 sheet 高度**（`applyMobileDetailHeight(opts)`）：內容渲染後用雙層 `requestAnimationFrame` 量測 `#locationList.scrollHeight`（確保排版真的完成才量，同步量測拿到的數字不可靠），若量出的 `contentH + handleH < mid` 就縮到內容實際高度（`sheetLevel = 'content'`），撐得滿或更高就開在 `mid`（`sheetLevel = 'mid'`）；`contentH` 會用 `Math.max(..., peek 高度)` 設下限，避免量測異常時 sheet 塌到 0 或小到連拉桿都碰不到
-- **`preferFull` 選項**（v24 新增）：`opts.preferFull = true` 時，若內容量落在 `mid`（需要使用者自己拖才能看完），改為貼合實際內容高度展開（不是撐死到 `full` 的固定高度，下面不會空白）；只有內容真的長到超過 `full` 的上限才封頂在 `full`（此時本來就得靠內部捲動看完）。目前只有「從分享連結進來的地圖模式」這條路徑傳 `preferFull: true`，其他入口維持原本的 `mid` 預設
+- **`preferFull` 選項**（v24 新增）：`opts.preferFull = true` 時，若內容量落在 `mid`（需要使用者自己拖才能看完），改為貼合實際內容高度展開（不是撐死到 `full` 的固定高度，下面不會空白）；只有內容真的長到超過 `full` 的上限才封頂在 `full`（此時本來就得靠內部捲動看完）。v28 之前只有「從分享連結進來的地圖模式」這條路徑傳 `preferFull: true`，手動拖曳到 `full` 走的是另一條路徑、一律套固定高度，內容短時下方留白；v28 修正 `applySheetLevel()` 拖到 `'full'` 時也重用 `measureSheetContentHeight()`/`fitDetailToTarget()`（從原本的邏輯抽出來的共用函式），兩條路徑統一套用內容高度計算
 - **拖曳上限依內容而定**：`sheetLevelsStack()` 在 `sheetLoc` 有值且 `sheetContentMaxHeight` 不是 null（短內容詳情）時回傳 `['peek','content']`，其餘情況（列表、或內容本身撐得滿 mid 的詳情）回傳 `['peek','mid','full']`；`initBottomSheet()` 的 touchmove 上限固定拿 `levels[levels.length-1]`，不是寫死 `full`——短內容詳情這樣才不會被拖到貼齊 header、底下留一大片空白
 - **層級記憶**（`sheetReturnLevel`）：從列表點卡片進入詳情時記住當下層級（`fromListLevel`），關閉時回到這一層；從 marker/cluster popup 進入詳情不會設定/清除這個記憶——這樣即使先從列表進入，之後又在 popup 裡切換到其他機台/其他聚合點，關閉時仍會回到最一開始的列表層級。真正會清掉這個記憶、回到 `peek` 的入口只有：直接從 marker/popup 開始（沒有列表歷史）、點地圖空白處、篩選/搜尋條件改變
 - `closeDetailPanel(forcePeek)`：新增 `forcePeek` 參數，篩選/搜尋改變時傳 `true`，無條件回 `peek`；X 按鈕、原生 popup 關閉則不傳，走 `sheetReturnLevel || 'peek'` 的一般邏輯
@@ -273,6 +275,9 @@ function fitOptionsWidth(container) {
 - **2026/07 補充（`CACHE_VERSION` 跟對外版本號脫鉤）**：`CACHE_VERSION` 判斷要不要 bump，只看「這次改動有沒有動到 `SHELL_ASSETS` 清單裡任一檔案的 bytes」，跟這次改動在語意上算不算一個值得對外公布的版本（README/Notion 那個 v24、v25）無關——即使是純架構重構、沒有任何使用者可見的功能變化（例如 2026/07 從單一 `index.html` 拆成 ES Modules，`index.html` 內容本身變了），只要動到 `SHELL_ASSETS`，`CACHE_VERSION` 一樣要 bump，不然已安裝 PWA 的舊使用者會持續吃到快取住的舊殼層。這次剛好兩邊都遞增到同一個數字（`v25`）純屬巧合，不代表兩套編號以後永遠對得上——`CACHE_VERSION` 是機械式開關，Notion/README 的版本號才是語意判斷
 - **v26**：`index.html`（`#topBar` wrapper 結構）、`style.css`、`js/main.js` 都改了，`index.html` 在 `SHELL_ASSETS` 清單裡，因此 bump；`style.css`／`js/main.js`／新增的 `js/scroll.js` 本來就不在 `SHELL_ASSETS`，靠 catch-all 的 `cacheFirst` 規則自然重抓，不受影響但仍受惠於這次 bump（`activate` 會整組清掉舊版 `SHELL_CACHE`，這些檔案也會一起變成 cache miss，強制重新打網路抓最新版本）
 - **v26.1**：`v26` 已經 push 上線之後，才發現並修好 `js/pwa.js` 下拉刷新 spinner 的 bug（見「PWA 自動刷新 + 下拉刷新」）——這代表已經有使用者的 `cardradar-shell-v26` 快取住了有 bug 的舊版 `pwa.js`，即使把修好的檔案 push 上去，`CACHE_VERSION` 字串沒變、快取名稱沒變，`cache-first` 還是會命中舊快取，不會重新抓。這次沒有對應的新對外版號（README/Notion 仍算 v26 這個 release 的一部分），純粹需要一個「沒出現過的新字串」去觸發 `activate` 清快取，因此用 `'v26.1'`——再次印證 `CACHE_VERSION` 是機械式開關，只看「需不需要讓已快取的使用者重新抓檔案」，跟對外版本號語意上算不算一個新版本無關
+- **v27**：`index.html`/`style.css`/`js/main.js` 都動到（新增更新日誌 header 連結與相關樣式），`CACHE_VERSION` 從 `'v26.1'` 改為 `'v27'`；另外新增 `isChangelogRequest()` 判斷，讓 `changelog.json` 跟 Google Sheet 資料一樣走 network-first（原本會落入 catch-all 的 cache-first 殼層快取，導致之後只更新 `changelog.json` 內容、沒動到其他殼層檔案時，已安裝 PWA 的使用者看不到新增的更新日誌條目）
+- **v28**：這次修的三個 bug（`main.js` 漏 import 導致 search/filter 整個失效、`sort.js` 對 import binding 直接賦值導致排序相關功能全壞、`map.js` 手動拖到 `full` 沒套用內容高度計算）雖然沒有動到 `SHELL_ASSETS` 清單裡的檔案本身內容以外的東西，但 `main.js` 在清單內，因此照規則仍要 bump；`CACHE_VERSION` 從 `'v27'` 改為 `'v28'`，讓已安裝 PWA/瀏覽器快取住舊版（壞掉的）JS 的使用者能拿到修好的版本
+  - 這三個 bug 的根因剛好都對應到上面「跨檔案依賴要注意」段落列出的坑：`main.js` 是漏了 `export`/`import`（模組圖連結失敗但 JS 語法本身沒錯，所以是 silent failure，不會有明確畫面錯誤）；`sort.js` 是對 import 進來的變數直接重新賦值（應該呼叫來源檔案的 setter，這裡是 `setCurrentFiltered()`）——之後改動任何跨檔案共用狀態，優先照著那段檢查清單走一遍，可以提前攔下這類問題
 - 純資料更新（Google Sheet 內容變動）不受影響，本來就是走 `DATA_CACHE` 的 network-first
 
 ### 倒數 Badge（v23 新增）
@@ -321,6 +326,8 @@ function fitOptionsWidth(container) {
 | `pwa_launch_mode`（v21） | 每次頁面載入判斷 standalone/browser 開啟 | `mode`(standalone/browser) |
 | `sort_change`（v22） | 選擇排序方式並實際套用（距離排序需等定位成功才觸發，選了但定位失敗不算） | `sort_key`(end_date_asc/distance_asc/distance_desc), `device` |
 | `geo_permission_result`（v22） | 距離排序觸發 `navigator.geolocation` 定位請求後取得結果的當下 | `geo_result`(granted/denied/timeout/unavailable), `device` |
+| `changelog_open`（v27） | 打開更新日誌 modal/sheet | `source`(header_desktop/header_mobile_list), `device` |
+| `changelog_close`（v27） | 關閉更新日誌 modal/sheet | `method`(x_button/backdrop_click), `device` |
 
 **追蹤時的保護機制**（避免程式自動觸發的行為污染數據）：
 - `filter_result` / `filter_clear`：沒有套用任何篩選時不記錄（純搜尋、初始狀態、清除已經是空的都不算）
@@ -338,6 +345,7 @@ function fitOptionsWidth(container) {
 - `device` 維度說明文字待更新：v24 起值從 mobile/desktop 擴充為 mobile/mobile_pwa/desktop/desktop_pwa，GA4 後台自訂維度的說明文字需手動更新
 - `Sheet 狀態`（`state`）說明文字待更新：目前後台還寫舊的 open/peek，應改為 peek/mid/full/content
 - `觸發來源`（`source`）說明文字待更新：目前後台列出的 source 值有部分已過時（如 map_popup、map_list），需修正為實際值
+- 「GA4事件追蹤表」資料庫（v27）：`changelog_open`/`changelog_close` 已新增記錄，但「新增版本」跟「觸發位置」schema 選項裡還沒有「v27」跟「更新日誌 Modal/Sheet」，需手動到資料庫設定裡加選項（工具權限沒有 `update-data-source`，無法自動加）
 
 **⚠️ `addEventListener` 直接傳函式參照的坑**：`addEventListener('click', someFn)` 會把 `event` 物件當作 `someFn` 的第一個參數傳入。如果 `someFn` 的第一個參數是拿來控制邏輯用的（例如 `skipTracking`），會被 `event` 物件（永遠 truthy）誤判，導致邏輯整個相反卻不會報錯。要嘛改用箭頭函式包一層再傳（`addEventListener('click', () => someFn())`），要嘛該參數不要放在第一位。
 
@@ -370,7 +378,22 @@ function fitOptionsWidth(container) {
 - **GA**：評估過不加新事件——這是捲動手勢驅動的連續 UI 動畫，跟現有事件（`view_toggle`、`card_click` 等）對應「明確使用者意圖」的性質不同，硬加會產生大量低價值事件，還會排擠 GA4 免費額度裡真正重要事件的採樣
 
 ### Header 順序（PC）
-`最後更新時間 ｜ 回報表單 　[列表][地圖]`
+`最後更新時間 ｜ 回報表單 ｜ 更新日誌 　[列表][地圖]`（v27 新增「更新日誌」）
+
+### 更新日誌（v27 新增）
+- `js/changelog.js`：讀取根目錄 `changelog.json`、渲染條目列表、開關 modal/sheet、觸發 GA event
+- `changelog.json`（根目錄，跟 `manifest.json` 同層）：`date`/`version`/`text` 三欄，`text` 可為字串（單筆）或陣列（同天多筆，各自變成一個 bullet），`version` 純內部對照用、不顯示給使用者
+- 進入點：桌機 header「最後更新｜回報表單」後方；手機列表模式上方同一排 meta 資訊同步加上
+- **不共用**既有的 `grid-modal`（機台詳情，寬度太窄）跟 `filter-sheet`（篩選排序 bottom sheet，多段拖曳太複雜），另起一套簡單版：桌機置中 modal（`max-width: 480px; max-height: 80vh`）、手機純 CSS media query 切成貼底單一高度 sheet（`max-height: 70vh`），不做拖曳/snap 手勢
+- 標題下方一行署名 `made by @yywggwyy`（Space Mono，灰字）
+- `z-index: 2300`，蓋過 A2HS banner（2100）與 filter/sort sheet（2200/2201）
+- **⚠️ mobile header 重複顯示的坑**：mobile 版原本只把 `.header-right .report-link` 跟 `.header-divider` 列入隱藏清單，沒把新的 `.changelog-link` 也列進去，導致桌機那顆連結在手機 header 上跟著跑出來、跟手機列表列的那顆重複顯示——新增任何 header 連結時記得同步檢查這份隱藏清單
+- GA4 事件：`changelog_open`（`source`: header_desktop/header_mobile_list，`device`）、`changelog_close`（`method`: x_button/backdrop_click，`device`）；GA4 後台「新增版本」跟「觸發位置」schema 選項還沒有「v27」跟「更新日誌 Modal/Sheet」，需手動到資料庫設定加選項（工具權限沒有 `update-data-source`，無法自動加）
+
+### 最後更新時間格式（v27 修正）
+- Google Sheet 儲存格原始格式是 12 小時制（例如 `2026/7/14 下午 8:33:00`，AM/PM 跟時數之間可能有空白），新增 `to24Hour()` 轉換函式，順便拿掉秒數
+- 轉換規則：下午且非 12 點 +12 小時；上午 12 點 → 0 點（午夜）；下午 12 點維持 12（正午）；格式跟預期不符就直接回傳原字串，不讓「最後更新」整個消失
+- 這個修正同時緩解了另一個問題：`.report-link`/`.changelog-link` 因為 `white-space: nowrap` 不會縮小換行，導致所有 flex-shrink 壓力集中在日期文字上，稍微縮小就整行跳去換行，換行後短的第二行在原本（幾乎沒縮小的）box 寬度裡留下大片空白——縮短顯示文字後大部分螢幕寬度不會再觸發這個問題
 
 ---
 
