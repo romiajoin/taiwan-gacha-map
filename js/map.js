@@ -350,20 +350,33 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
     }
 
     // ---- Mobile：bottom sheet（peek／mid／full 三檔，列表跟詳情共用同一套）----
-    export let sheetLevel = 'peek';        // 'peek' | 'mid' | 'full' | 'content'（content 專屬給撐不滿 mid 的短內容詳情用）
+    export let sheetLevel = 'peek';        // 'peek' | 'mid' | 'full' | 'content'（content 代表貼合內容實際高度，不留空白；
+                                            // 由 applyMobileDetailHeight 開啟時直接判斷，或由 fitDetailToTarget 動態決定，見下方）
     let sheetLoc = null;            // 目前顯示詳情的那一筆；null 代表顯示列表
     let sheetReturnLevel = null;    // 從 sheet 列表點卡片進入詳情時，記住當時的層級，關閉時要回去；
                                      // 其餘入口（marker／popup／點地圖空白處／篩選改變）不設定，關閉一律回 peek
-    let sheetContentMaxHeight = null; // 詳情內容撐不滿 mid 時，記住內容實際高度；這種情況下拖曳最高只能拉到這裡，
-                                       // 不是拉到 full（內容就這麼多，拉更高只會多出空白，沒有意義）
+    let sheetContentMaxHeight = null; // 詳情內容不滿 full 時，記住內容實際高度，給 levelHeightPx('content') 用
+    let sheetMeasuring = false; // applyMobileDetailHeight 的雙層 rAF 量測還沒寫回 sheetDragLevels/sheetLevel 前設為 true；
+                                 // 期間 touchstart 直接忽略，避免抓到上一筆內容殘留的舊 sheetDragLevels，導致拖曳範圍算錯、卡住不動
+    let sheetDragLevels = ['peek', 'mid', 'full']; // 目前這筆內容允許拖曳停靠的層級清單，由 applyMobileDetailHeight 依內容實際高度決定：
+                                                    // 內容 < mid → ['peek','content']（可收到 peek，但不會有 mid/full）
+                                                    // preferFull（分享連結進來）→ 交給 fitDetailToTarget 判斷後動態決定，貼合內容則為 ['peek','content']，否則 ['peek','mid','full']
+                                                    // 其餘（一般點 marker，或列表模式）→ ['peek','mid','full']；手動拖到 full 時同樣交給 fitDetailToTarget（見 applySheetLevel）判斷要不要貼合內容，不留空白
 
     function sheetLevelsStack() {
-      // 短內容的詳情（撐不滿 mid）：只有 peek／content 兩檔，拖到底就是內容實際高度，不會拉到 full 空出一片。
-      // 列表瀏覽、或內容本身就撐得滿 mid 的詳情：維持原本 peek／mid／full 三檔。
-      if (sheetLoc && sheetContentMaxHeight != null) {
-        return ['peek', 'content'];
-      }
-      return ['peek', 'mid', 'full'];
+      // 列表模式一律維持 peek／mid／full 三檔；詳情模式的拖曳範圍改用 sheetDragLevels，
+      // 由 applyMobileDetailHeight 依這一筆內容的實際高度決定（見上方變數註解）。
+      return sheetLoc ? sheetDragLevels : ['peek', 'mid', 'full'];
+    }
+
+    // ---- 依目前的拖曳範圍決定 handle 要不要顯示：只剩一檔可停（完全不可拖曳）時隱藏拉桿——
+    // 用 visibility 而非 display，讓它繼續佔位（保留原本的版面間距），只是看不到也點不到 ----
+    function updateHandleVisibility() {
+      const handle = document.querySelector('.sheet-handle');
+      if (!handle) return;
+      const draggable = sheetLevelsStack().length > 1;
+      handle.style.visibility = draggable ? '' : 'hidden';
+      handle.style.pointerEvents = draggable ? '' : 'none';
     }
 
     export function applySheetLevel(level) {
@@ -380,6 +393,7 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
         sidebar.style.height = levelHeightPx(level) + 'px';
         renderMobileSheetContent();
       }
+      updateHandleVisibility();
       if (map) setTimeout(() => map.invalidateSize(), 320);
     }
 
@@ -463,26 +477,53 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
       // 切換到新的詳情內容，內部捲動位置要回到最上面，不要沿用上一筆看到一半的位置。
       if (scrollWrapper) scrollWrapper.scrollTop = 0;
       sidebar.style.transition = 'none';
+      sheetMeasuring = true; // 量測期間先擋住拖曳，避免抓到上一筆內容殘留的 sheetDragLevels
+      // 內容如果有圖片（.popup-img 沒有固定高度／aspect-ratio），圖片還沒從網路載入完成前，
+      // <img> 在版面上幾乎是 0 高度——只等排版完成（rAF）沒辦法保證圖片也下載完了。
+      // 先等內容裡目前看得到的圖片都 load/error 過一輪，才進到下面的排版量測，
+      // 不然量到的 scrollHeight 會漏算圖片高度，把有圖片的長內容誤判成短內容，
+      // 導致拖曳上限被鎖在太小的高度，怎麼拖都拖不上去。
+      const imgs = Array.from(list.querySelectorAll('img'));
+      const pendingImgs = imgs.filter(img => !img.complete);
+      const waitImagesLoaded = pendingImgs.length
+        ? Promise.all(pendingImgs.map(img => new Promise(resolve => {
+            img.addEventListener('load', resolve, { once: true });
+            img.addEventListener('error', resolve, { once: true });
+          })))
+        : Promise.resolve();
+      // 內容剛塞進 DOM 的同一瞬間量 scrollHeight 不可靠（瀏覽器可能還沒真的排版完成）；
+      // 用兩層 rAF 確保量到的是排版後的真實高度，避免量到還沒定案的中間值。
+      waitImagesLoaded.then(() => {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           const mid = levelHeightPx('mid');
           const contentH = measureSheetContentHeight();
           if (contentH < mid) {
-            // 內容本來就比 mid 矮：維持貼合內容高度，就算 preferFull 也不用硬撐到 full，
-            // 不然下面只會多出一大塊空白，反而更難看。
+            // 內容 < mid：預設貼合內容高度，但仍可拖曳收到 peek（不會拉到 mid/full，
+            // 因為內容就這麼多，拉更高只會多出空白，沒有意義）。
             sheetContentMaxHeight = contentH;
+            sheetDragLevels = ['peek', 'content'];
             sheetLevel = 'content';
             sidebar.style.height = contentH + 'px';
           } else if (preferFull) {
             // 分享連結進來：盡量一次看到完整內容，交給共用的 fitDetailToTarget 決定要不要貼合。
             fitDetailToTarget('full');
+            // fitDetailToTarget 只會動 sheetLevel／sheetContentMaxHeight／實際高度，不會動
+            // sheetDragLevels（拖曳範圍），這裡要自己依剛剛判斷出的結果補上，不然會沿用
+            // 上一筆內容殘留的拖曳範圍。
+            sheetDragLevels = sheetLevel === 'content' ? ['peek', 'content'] : ['peek', 'mid', 'full'];
           } else {
-            sheetContentMaxHeight = null; // 內容夠高，維持一般的 mid/full 兩檔可拖
+            // 內容撐滿或超過 full：預設開在 mid，可再手動拖到 full，靠內部捲動看完
+            sheetContentMaxHeight = null;
+            sheetDragLevels = ['peek', 'mid', 'full'];
             sheetLevel = 'mid';
             sidebar.style.height = mid + 'px';
           }
+          updateHandleVisibility();
+          sheetMeasuring = false; // 該筆內容的 sheetDragLevels/sheetLevel 都已寫回最新值，可以放行拖曳了
           requestAnimationFrame(() => { sidebar.style.transition = ''; });
         });
+      });
       });
       if (map) setTimeout(() => map.invalidateSize(), 320);
     }
@@ -622,14 +663,18 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
 
       let startY = 0;
       let startHeight = 0;
+      let dragActive = false; // touchstart 被 sheetMeasuring 擋下時維持 false，讓後續 touchmove/touchend 知道這次手勢沒有真的啟動
 
       handle.addEventListener('touchstart', function(e) {
+        if (sheetMeasuring) { dragActive = false; return; } // 高度量測還在跑，這時候的 sheetDragLevels 可能是上一筆內容殘留的舊值，先不處理這次觸控
+        dragActive = true;
         startY = e.touches[0].clientY;
         startHeight = sidebar.getBoundingClientRect().height;
         sidebar.style.transition = 'none';
       }, { passive: true });
 
       handle.addEventListener('touchmove', function(e) {
+        if (!dragActive) return;
         const dy = startY - e.touches[0].clientY;
         const levels = sheetLevelsStack();
         const minH = levelHeightPx(levels[0]);
@@ -639,13 +684,29 @@ window.closeDetailPanel = closeDetailPanel; // 給 buildDetailContentHtml 動態
       }, { passive: true });
 
       handle.addEventListener('touchend', function(e) {
+        if (!dragActive) return;
+        dragActive = false;
         sidebar.style.transition = '';
         const dy = startY - e.changedTouches[0].clientY;
         const levels = sheetLevelsStack();
         const curIdx = levels.indexOf(sheetLevel);
+        // 注意：touchmove 讓 sidebar 的實際高度可以一路拖到 minH（peek）～maxH（這個 stack 最高一階，
+        // 例如 full）之間任何位置，不會卡在「目前這階的鄰居」——但如果放開時永遠只按方向移動固定一階
+        // （例如從 peek 一路拖到接近 full，卻只彈回 mid），使用者會覺得「怎麼拖到底也上不去 full」，
+        // 像是卡住一樣。改成：先看實際放開時的高度離哪一階最近就跳去那一階（可以一次跨好幾層），
+        // 但只要有滑過 50px 的門檻，至少保證往滑動方向移動一階，避免拖曳距離不夠時卡在原地不動。
+        const curHeight = sidebar.getBoundingClientRect().height;
         let nextIdx = curIdx;
-        if (dy > 50 && curIdx < levels.length - 1) nextIdx = curIdx + 1;      // 往上滑：展開一層
-        else if (dy < -50 && curIdx > 0) nextIdx = curIdx - 1;               // 往下滑：收合一層（不會低於清單/摘要層）
+        if (Math.abs(dy) > 50) {
+          let closestIdx = 0, minDiff = Infinity;
+          levels.forEach((lvl, idx) => {
+            const diff = Math.abs(levelHeightPx(lvl) - curHeight);
+            if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
+          });
+          nextIdx = dy > 0
+            ? Math.min(Math.max(closestIdx, curIdx + 1), levels.length - 1) // 往上滑：展開，至少一階，可跨多階
+            : Math.max(Math.min(closestIdx, curIdx - 1), 0);                // 往下滑：收合，至少一階，可跨多階
+        }
         applySheetLevel(levels[nextIdx]);
         if (nextIdx !== curIdx) {
           gtag('event', 'sheet_toggle', { state: levels[nextIdx], device: getDeviceType() }); // GA：只在真正拖拉造成狀態改變時記錄

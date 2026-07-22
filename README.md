@@ -3,7 +3,7 @@
 社群共建的台灣 IP 抽卡機 / 快閃活動查詢網站，資料由管理者維護於 Google Sheet，網站自動讀取並顯示。
 
 **🔗 [查看網站](https://cardradartw.vercel.app/)**  
-**最後更新：** 2026/07/15（v28）
+**最後更新：** 2026/07/15（v28.2）
 
 ---
 
@@ -55,10 +55,12 @@ js/
   filters.js         # 篩選 UI
   sort.js            # 排序 UI + 定位權限
   grid.js            # 列表卡片渲染 + 排序邏輯
+  changelog.js       # 更新日誌讀取／渲染／modal-sheet 開關（v27 新增）
   pwa.js             # A2HS banner／自動刷新／下拉刷新／SW 註冊
   utils.js           # 裝置/顯示模式判斷
   visitor.js         # 訪客計數
 api/share.js         # 分享連結 OG meta 用的 serverless function
+changelog.json       # 更新日誌內容（v27 新增，跟 manifest.json 同層）
 ```
 
 ---

@@ -2,7 +2,7 @@
 
 **網站網址：** https://cardradartw.vercel.app/  
 **GitHub Repo：** https://github.com/romiajoin/taiwan-gacha-map  
-**最後更新：** 2026/07/15（v28）
+**最後更新：** 2026/07/15（v28.2）
 
 ---
 
@@ -69,7 +69,8 @@
 
 ### Header
 - 右側由左至右：最後更新時間 ｜ 回報表單 ｜ 更新日誌 　[列表][地圖]（v27 新增「更新日誌」連結）
-- 回報表單／更新日誌：灰色文字（`--fill-gray`），hover 變藍，回報表單 `target="_blank"` 開新分頁；更新日誌點擊開啟彈窗（見下方「更新日誌」）
+- 回報表單：灰色文字（`--fill-gray`），hover 變藍，`target="_blank"` 開新分頁
+- 更新日誌：灰色文字（`--fill-gray`），hover 變藍（v27 新增，樣式與回報表單一致）
 - View Toggle：768px 以下隱藏文字標籤，只顯示 icon；padding 調整為 `8px 10px`
 - 手機版列表模式：header 右側只留 icon toggle，「回報表單／更新日誌」連結改放在列表上方同一排 meta 資訊裡（跟最後更新時間同一行）
 
@@ -82,6 +83,15 @@
 - 標題下方有一行署名「made by @yywggwyy」（Space Mono，灰字）
 - `z-index: 2300`，蓋過 A2HS banner（2100）與篩選/排序 sheet（2200/2201）
 - GA4 事件：`changelog_open`／`changelog_close`，詳見下方事件表
+
+### 更新日誌（v27 新增）
+- **進入點**：桌機 header「最後更新｜回報表單」後方；手機列表模式上方同一排 meta 資訊同步新增，避免重複顯示（開發時發現 mobile 隱藏清單漏了新連結，已修正，詳見 `CLAUDE.md`）
+- **資料來源**：根目錄 `changelog.json`（跟 `manifest.json` 同層），欄位為 `date`/`version`/`text`；`text` 可為字串（單筆）或陣列（同天多筆，各自變成一個 bullet）；`version` 純內部對照用，不顯示給使用者
+- **顯示方式**：不共用既有的 `grid-modal`（機台詳情，寬度太窄）或 `filter-sheet`（篩選排序 bottom sheet，多段拖曳過於複雜），另起一套簡單版
+  - 桌機：置中 modal，`max-width: 480px; max-height: 80vh`
+  - 手機：純 CSS media query 切成貼底單一高度 sheet，`max-height: 70vh`，不做拖曳/snap 手勢
+- **z-index**：2300，蓋過 A2HS banner（2100）與 filter/sort sheet（2200/2201）
+- **快取策略**：`changelog.json` 走 network-first（跟 Google Sheet 資料一樣），不落入殼層 cache-first 規則，確保只更新內容不動殼層檔案時，已安裝 PWA 的使用者也能看到新條目
 
 ### GA4 自訂事件追蹤
 | 事件名稱 | 觸發時機 | 參數 |
@@ -116,8 +126,8 @@
 | `pwa_launch_mode` | 每次載入判斷 standalone/browser 開啟（v21） | `mode` |
 | `sort_change` | 選擇排序方式並實際套用（v22） | `sort_key`, `device` |
 | `geo_permission_result` | 距離排序觸發定位請求後取得結果（v22） | `geo_result`, `device` |
-| `changelog_open`（v27） | 打開更新日誌彈窗 | `source`（header_desktop/header_mobile_list）, `device` |
-| `changelog_close`（v27） | 關閉更新日誌彈窗 | `method`（x_button/backdrop_click）, `device` |
+| `changelog_open`（v27） | 打開更新日誌 modal/sheet | `source`（header_desktop/header_mobile_list）, `device` |
+| `changelog_close`（v27） | 關閉更新日誌 modal/sheet | `method`（x_button/backdrop_click）, `device` |
 
 詳細觸發規則與防誤觸機制見 `CLAUDE.md`。
 
@@ -139,7 +149,7 @@
 
 ### PWA / 加到主畫面（A2HS Banner，v21 新增）
 - **manifest.json**：`name`/`short_name`、`theme_color: #0066FF`、`background_color: #F2F2F7`、`display: standalone`；圖示 `icon-192.png`/`icon-512.png`/`icon-maskable-512.png`（maskable 沿用一般版本，logo 本身留白已在安全區內）、另加 `apple-touch-icon.png`
-- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`；`CACHE_VERSION` 現為 `'v28'`（v27 新增 `isChangelogRequest()` 判斷，讓 `changelog.json` 跟 Google Sheet 資料一樣走 network-first，避免已安裝 PWA 的使用者看不到新增的更新日誌條目；v28 修正 search/filter/sort 與 drag-to-full sheet 高度後再次 bump，讓既有訪客/PWA 安裝端拿到修好的 JS，詳見 `CLAUDE.md`）
+- **Service Worker（`sw.js`）**：靜態殼層 cache-first、Google Sheets CSV network-first（離線時 fallback 快取）、Cloudinary 圖片與地圖圖磚 cache-first，用版本號 cache name 管理更新；v22 修正 `CACHE_VERSION` 長期卡在 `v1` 未更新的問題（改版後需清瀏覽記錄才看得到最新內容），改為對齊 release 版號並搭配 `vercel.json` 的 no-cache header，詳見 `CLAUDE.md`；`CACHE_VERSION` 現為 `'v28.2'`，版本歷程詳見 `CLAUDE.md`「Service Worker 快取版本管理」
 - **自動刷新（v24 新增）**：回到前景（`visibilitychange`/`focus`）時，若距上次成功抓取超過 30 分鐘（`REFRESH_THROTTLE_MS`），靜默刷新資料（不清空列表、失敗只顯示 toast）；節流是為了避免短時間切來切去連打 API
 - **下拉刷新（v24 新增）**：列表模式（`#gridView`）捲到頂端時，往下拉超過 60px 放開即觸發刷新；繞過節流（使用者主動操作，應無條件給最新資料）；地圖模式不支援（手勢衝突）
   - v26.1 修正：spinner 曾因 CSS animation 起點跟殘留 inline transform 疊在一起，導致轉圈動畫視覺上卡住不動、體感是「卡一下就直接收回」，詳見 `CLAUDE.md`
@@ -186,6 +196,7 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - 預設狀態（沒選任何地點）改為**可捲動的地點卡片列表**（取代原本的提示文字），跟桌機、列表模式共用同一套卡片渲染
 - 詳情內容依實際高度決定 sheet 高度：內容撐不滿 `mid` 就縮到內容實際高度（不留空白），此時拖曳上限也是內容高度、不是 `full`，避免內容很短卻能拖出一大片空白；內容撐得滿或更高就開在 `mid`，可再手動拖到 `full` 捲動看完
   - v28 修正：這套「依內容高度調整」原本只有分享連結進來（`preferFull`）那條路徑會套用，使用者手動拖曳到 `full` 一律用固定高度，內容較短時下方會留白；修正後手動拖到 `full` 同樣套用內容高度計算，詳見 `CLAUDE.md`
+  - v28.2 修正：內容 ≥ `full` 時，上滑拖曳卡在 `mid` 附近上不去 `full`——`touchend` 改成依放開瞬間實際高度找最近一階（不再固定只跳一階），內容量測也改成先等內容裡的圖片載入完才量高度（未載入的 `<img>` 是 0px，導致有圖片的長內容被誤判成短內容），詳見 `CLAUDE.md`
 - 從列表點卡片進入詳情，關閉後回到選中前的那個層級；從地圖 marker 或 cluster popup 進入詳情，關閉後一律回到 `peek`——即使在 popup 裡切換到別的機台、別的聚合點，只要最一開始是從列表進來的，這個記憶都會保留到真正關閉那一刻
 - 點聚合 marker 時，sheet 先收到 `peek`，讓地圖空間空出來顯示 popup；點地圖空白處也會收合 sheet（僅限有詳情或 popup 開著時，單純瀏覽列表不受影響）
 - 關閉詳情、回到列表時，捲動到最後選中那張卡片的位置（對齊頂部），不是回到列表頂端，也不是還原成點擊當下原本捲到哪裡
@@ -229,7 +240,7 @@ cluster popup（同座標多機清單）另外有一層：先顯示「這裡有 
 - PC header：`#lastUpdated`（`.header-info`，Space Mono 14px，fill-black）
 - Mobile list mode：`#listLastUpdated`，位於 `#gridView` 內、卡片上方，隨卡片捲動（12px / weight 400 / text-align center）
 - ~~Mobile map mode `#mapLastUpdated`~~：v20 移除（地圖模式詳情面板改版後，這排資訊沒有合適的位置放，整個拿掉了）
-- v27 修正：時間顯示改為 24 小時制（Google Sheet 原始格式為 12 小時制，如 `2026/7/14 下午 8:33:00`），新增 `to24Hour()` 轉換函式並移除秒數顯示；同時緩解「回報表單／更新日誌」連結因 `white-space: nowrap` 不會縮小，導致縮寫壓力全部集中在日期文字上而提早換行、換行後留白的問題，詳見 `CLAUDE.md`
+- **v27 修正：24 小時制**——Google Sheet 儲存格原始格式是 12 小時制（例如 `2026/7/14 下午 8:33:00`），新增 `to24Hour()` 轉換函式並拿掉秒數；格式跟預期不符就直接回傳原字串，不讓「最後更新」整行消失。這個修正同時緩解了 `.report-link`/`.changelog-link` 因 `white-space: nowrap` 不縮小換行、壓力集中在日期文字上導致提早換行留白的問題，詳見 `CLAUDE.md`
 
 ### 地點數量顯示
 - Toolbar：`74 個地點`（數字青色 `#00c2a8`，20px bold；「個地點」文字同為 20px regular）

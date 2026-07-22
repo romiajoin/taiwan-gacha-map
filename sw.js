@@ -7,7 +7,7 @@
 // 版本號 bump 時（CACHE_VERSION 改掉），install/activate 會自動清掉舊快取，
 // 不需要手動處理使用者端的快取殘留。
 
-const CACHE_VERSION = 'v28.1';
+const CACHE_VERSION = 'v28.2';
 const SHELL_CACHE = `cardradar-shell-${CACHE_VERSION}`;
 const DATA_CACHE = `cardradar-data-${CACHE_VERSION}`;
 const IMAGE_CACHE = `cardradar-images-${CACHE_VERSION}`;
